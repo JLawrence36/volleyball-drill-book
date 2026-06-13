@@ -235,6 +235,7 @@ function makeId(prefix) {
   if (window.crypto && window.crypto.randomUUID) {
     return `${prefix}_${window.crypto.randomUUID()}`;
   }
+
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 }
 
@@ -280,6 +281,7 @@ function loadState() {
   try {
     const parsed = JSON.parse(saved);
     const fresh = defaultState();
+
     state = {
       ...fresh,
       ...parsed,
@@ -302,6 +304,7 @@ function loadState() {
 
 function formatDate(value) {
   if (!value) return "";
+
   try {
     return new Date(value + "T00:00:00").toLocaleDateString();
   } catch {
@@ -310,7 +313,9 @@ function formatDate(value) {
 }
 
 function totalMinutes() {
-  return state.currentPractice.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+  return state.currentPractice.blocks.reduce((sum, block) => {
+    return sum + (Number(block.minutes) || 0);
+  }, 0);
 }
 
 function switchTab(tabName) {
@@ -334,7 +339,10 @@ function findDrillById(id) {
 
 function findDrillByNumber(number) {
   const clean = String(number).padStart(2, "0");
-  return DRILLS.find(drill => String(drill.number).padStart(2, "0") === clean);
+
+  return DRILLS.find(drill => {
+    return String(drill.number).padStart(2, "0") === clean;
+  });
 }
 
 function isFavoriteDrill(id) {
@@ -351,6 +359,7 @@ function toggleFavorite(id) {
   }
 
   state.favoriteDrills = [...new Set(state.favoriteDrills)];
+
   saveState();
   renderDrills();
 }
@@ -418,12 +427,15 @@ function removeBlock(id) {
 function moveBlock(id, amount) {
   const blocks = state.currentPractice.blocks;
   const index = blocks.findIndex(block => block.id === id);
+
   if (index < 0) return;
 
   const next = index + amount;
+
   if (next < 0 || next >= blocks.length) return;
 
   [blocks[index], blocks[next]] = [blocks[next], blocks[index]];
+
   saveState();
   renderPlan();
 }
@@ -437,6 +449,7 @@ function duplicateBlock(id) {
   copy.title = `${copy.title} Copy`;
 
   state.currentPractice.blocks.push(copy);
+
   saveState();
   renderPlan();
 }
@@ -446,6 +459,7 @@ function updatePracticeDetails() {
   state.currentPractice.date = $("practiceDate")?.value || today();
   state.currentPractice.team = $("practiceTeam")?.value || "";
   state.currentPractice.focus = $("practiceFocus")?.value || "";
+
   saveState();
 }
 
@@ -459,6 +473,7 @@ function saveCurrentPractice() {
   practice.updatedAt = new Date().toISOString();
 
   const index = state.savedPractices.findIndex(item => item.id === practice.id);
+
   if (index >= 0) {
     state.savedPractices[index] = practice;
   } else {
@@ -466,8 +481,10 @@ function saveCurrentPractice() {
   }
 
   state.currentPractice = practice;
+
   saveState();
   renderAll();
+
   alert("Practice saved.");
 }
 
@@ -476,6 +493,7 @@ function loadPractice(id) {
   if (!practice) return;
 
   state.currentPractice = JSON.parse(JSON.stringify(practice));
+
   saveState();
   switchTab("plan");
 }
@@ -490,13 +508,16 @@ function duplicatePractice(id) {
   copy.updatedAt = new Date().toISOString();
 
   state.savedPractices.unshift(copy);
+
   saveState();
   renderSaved();
 }
 
 function deletePractice(id) {
   if (!confirm("Delete this saved practice?")) return;
+
   state.savedPractices = state.savedPractices.filter(item => item.id !== id);
+
   saveState();
   renderSaved();
 }
@@ -505,24 +526,30 @@ function buildTemplateBlock(item) {
   if (item.type === "drill") {
     const drill = findDrillByNumber(item.number);
     if (!drill) return null;
+
     const block = buildBlockFromDrill(drill);
     block.minutes = item.minutes || block.minutes;
+
     return block;
   }
 
   if (item.type === "mental") {
     const mental = MENTAL_BLOCKS.find(block => block.id === item.id);
     if (!mental) return null;
+
     const block = buildLibraryBlock(mental, "mental");
     block.minutes = item.minutes || block.minutes;
+
     return block;
   }
 
   if (item.type === "sc") {
     const sc = SC_BLOCKS.find(block => block.id === item.id);
     if (!sc) return null;
+
     const block = buildLibraryBlock(sc, "sc");
     block.minutes = item.minutes || block.minutes;
+
     return block;
   }
 
@@ -619,10 +646,17 @@ function renderPlan() {
 function renderCategories() {
   if (!$("categoryChips")) return;
 
-  const categories = ["All", "Favorites", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
+  const categories = [
+    "All",
+    "Favorites",
+    ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))
+  ];
 
   $("categoryChips").innerHTML = categories.map(category => {
-    const label = category === "Favorites" ? `★ Favorites (${state.favoriteDrills.length})` : category;
+    const label = category === "Favorites"
+      ? `★ Favorites (${state.favoriteDrills.length})`
+      : category;
+
     return `<button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(label)}</button>`;
   }).join("");
 }
@@ -661,9 +695,12 @@ function sortedDrills() {
   return [...DRILLS].sort((a, b) => {
     const ca = CATEGORY_ORDER.indexOf(a.category);
     const cb = CATEGORY_ORDER.indexOf(b.category);
+
     const safeA = ca === -1 ? 999 : ca;
     const safeB = cb === -1 ? 999 : cb;
+
     if (safeA !== safeB) return safeA - safeB;
+
     return Number(a.number || 0) - Number(b.number || 0);
   });
 }
@@ -697,9 +734,16 @@ function filteredDrills() {
 }
 
 function renderCategoryCards() {
-  const categories = CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category));
+  const categories = CATEGORY_ORDER.filter(category => {
+    return DRILLS.some(drill => drill.category === category);
+  });
+
   const cards = [
-    { category: "Favorites", count: state.favoriteDrills.length, locked: state.favoriteDrills.length === 0 },
+    {
+      category: "Favorites",
+      count: state.favoriteDrills.length,
+      locked: state.favoriteDrills.length === 0
+    },
     ...categories.map(category => ({
       category,
       count: DRILLS.filter(drill => drill.category === category).length,
@@ -712,6 +756,7 @@ function renderCategoryCards() {
       ${cards.map(card => `
         <button class="category-card ${card.category === "Favorites" ? "favorite-card" : ""} ${card.locked ? "locked" : ""}" data-category="${escapeHtml(card.category)}" ${card.locked ? "disabled" : ""}>
           <div class="category-card-icon">${categoryIcon(card.category)}</div>
+
           <div class="category-card-body">
             <h3>${escapeHtml(card.category)}</h3>
             <p>${escapeHtml(categoryDescription(card.category))}</p>
@@ -768,6 +813,7 @@ function renderDrills() {
         <div>
           <h3>${escapeHtml(drill.number ? `${drill.number}. ${drill.name}` : drill.name)}</h3>
           <p>${escapeHtml(drill.purpose || "")}</p>
+
           <div class="card-meta">
             ${escapeHtml(drill.level || "All levels")} · ${escapeHtml(drill.time || 10)} min · ${escapeHtml(drill.players || "Any")} · ${escapeHtml(drill.skills || "Volleyball")}
             · <button class="card-link" data-open-drill="${escapeHtml(drill.id)}">Details</button>
@@ -793,7 +839,9 @@ function renderMental() {
     btn.classList.toggle("active", btn.dataset.mentalFilter === mentalFilter);
   });
 
-  const blocks = MENTAL_BLOCKS.filter(item => mentalFilter === "All" || item.category === mentalFilter);
+  const blocks = MENTAL_BLOCKS.filter(item => {
+    return mentalFilter === "All" || item.category === mentalFilter;
+  });
 
   $("mentalLibrary").innerHTML = blocks.map(item => `
     <div class="library-card">
@@ -802,6 +850,7 @@ function renderMental() {
         <p>${escapeHtml(item.summary)}</p>
         <div class="card-meta">${escapeHtml(item.category)} · ${item.minutes} min · <button class="card-link" data-open-mental="${escapeHtml(item.id)}">Open</button></div>
       </div>
+
       <div class="card-actions">
         <button class="icon-btn" data-add-mental="${escapeHtml(item.id)}">＋</button>
       </div>
@@ -819,6 +868,7 @@ function renderSC() {
         <p>${escapeHtml(item.summary)}</p>
         <div class="card-meta">${escapeHtml(item.category)} · ${item.minutes} min · <button class="card-link" data-open-sc="${escapeHtml(item.id)}">Open</button></div>
       </div>
+
       <div class="card-actions">
         <button class="icon-btn" data-add-sc="${escapeHtml(item.id)}">＋</button>
       </div>
@@ -845,6 +895,7 @@ function renderRoster() {
         <div class="roster-name">${escapeHtml(player.name)}</div>
         <div class="roster-status">${player.present ? "Present" : "Tap to mark present"}</div>
       </div>
+
       <button class="icon-btn danger" data-delete-player="${escapeHtml(player.id)}">×</button>
     </div>
   `).join("");
@@ -871,6 +922,7 @@ function renderSaved() {
       <div class="saved-card">
         <h3>${escapeHtml(practice.title || "Untitled Practice")}</h3>
         <p>${escapeHtml(formatDate(practice.date))} · ${minutes} min · ${blocks.length} blocks</p>
+
         <div class="saved-actions">
           <button class="btn dark" data-load-practice="${escapeHtml(practice.id)}">Load</button>
           <button class="btn light" data-dupe-practice="${escapeHtml(practice.id)}">Duplicate</button>
@@ -894,6 +946,7 @@ function renderTemplates() {
           <p>${escapeHtml(template.focus)}</p>
           <div class="card-meta">${minutes} min · ${template.blocks.length} blocks</div>
         </div>
+
         <div class="card-actions">
           <button class="icon-btn" data-load-template="${escapeHtml(template.id)}">⚡</button>
         </div>
@@ -949,8 +1002,14 @@ function addPlayer() {
   const name = $("playerNameInput").value.trim();
   if (!name) return;
 
-  state.roster.push({ id: makeId("player"), name, present: false });
+  state.roster.push({
+    id: makeId("player"),
+    name,
+    present: false
+  });
+
   $("playerNameInput").value = "";
+
   saveState();
   renderRoster();
 }
@@ -958,13 +1017,16 @@ function addPlayer() {
 function togglePlayer(id) {
   const player = state.roster.find(item => item.id === id);
   if (!player) return;
+
   player.present = !player.present;
+
   saveState();
   renderRoster();
 }
 
 function deletePlayer(id) {
   state.roster = state.roster.filter(item => item.id !== id);
+
   saveState();
   renderRoster();
 }
@@ -1009,406 +1071,7 @@ function closeDetails() {
 }
 
 function printPracticePlan() {
-  const oldRoot = document.getElementById("practicePrintRoot");
-  const oldStyle = document.getElementById("practicePrintStyle");
-
-  if (oldRoot) oldRoot.remove();
-  if (oldStyle) oldStyle.remove();
-
-  const practice = state.currentPractice || {};
-  const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
-
-  const title = practice.title && practice.title.trim()
-    ? practice.title.trim()
-    : "Volleyball Practice";
-
-  const date = practice.date ? formatDate(practice.date) : "Not set";
-  const team = practice.team && practice.team.trim() ? practice.team.trim() : "Not set";
-  const focus = practice.focus && practice.focus.trim() ? practice.focus.trim() : "Not set";
-
-  const total = blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
-
-  let runningMinute = 0;
-
-  const blocksHtml = blocks.length
-    ? blocks.map((block, index) => {
-        const minutes = Number(block.minutes) || 0;
-        const start = runningMinute;
-        const end = runningMinute + minutes;
-        runningMinute = end;
-
-        return `
-          <div class="print-row">
-            <div class="print-time">
-              <strong>${start}-${end}</strong>
-              <span>${minutes} min</span>
-            </div>
-
-            <div class="print-main">
-              <div class="print-row-title">
-                <span>${index + 1}</span>
-                ${escapeHtml(block.title)}
-              </div>
-
-              <div class="print-row-meta">
-                ${escapeHtml(block.category || block.type || "Block")}
-              </div>
-
-              ${block.summary ? `
-                <div class="print-row-summary">
-                  ${escapeHtml(block.summary)}
-                </div>
-              ` : ""}
-
-              ${block.notes ? `
-                <div class="print-row-notes">
-                  <strong>Notes:</strong> ${escapeHtml(block.notes)}
-                </div>
-              ` : ""}
-            </div>
-          </div>
-        `;
-      }).join("")
-    : `
-      <div class="empty-print">
-        <strong>No practice blocks added.</strong>
-        <span>Add drills, mental blocks, S&C blocks, or custom notes before printing.</span>
-      </div>
-    `;
-
-  const rosterHtml = state.roster.length
-    ? state.roster.map(player => `
-        <div class="print-player">
-          <span>${player.present ? "✓" : "□"}</span>
-          ${escapeHtml(player.name)}
-        </div>
-      `).join("")
-    : `<div class="muted">No roster added.</div>`;
-
-  const printRoot = document.createElement("div");
-  printRoot.id = "practicePrintRoot";
-
-  printRoot.innerHTML = `
-    <main class="print-sheet">
-      <header class="print-header">
-        <div>
-          <h1>${escapeHtml(title)}</h1>
-          <p>Volleyball Practice Plan</p>
-        </div>
-
-        <div class="total-box">
-          <strong>${total}</strong>
-          <span>MIN</span>
-        </div>
-      </header>
-
-      <section class="print-info">
-        <div>
-          <span>Date</span>
-          <strong>${escapeHtml(date)}</strong>
-        </div>
-
-        <div>
-          <span>Team</span>
-          <strong>${escapeHtml(team)}</strong>
-        </div>
-
-        <div>
-          <span>Focus</span>
-          <strong>${escapeHtml(focus)}</strong>
-        </div>
-      </section>
-
-      <section class="timeline">
-        <h2>Practice Timeline</h2>
-        ${blocksHtml}
-      </section>
-
-      <section class="attendance">
-        <h2>Attendance</h2>
-        <div class="attendance-grid">
-          ${rosterHtml}
-        </div>
-      </section>
-
-      <footer>
-        Built with Volleyball Practice Planner
-      </footer>
-    </main>
-  `;
-
-  const printStyle = document.createElement("style");
-  printStyle.id = "practicePrintStyle";
-
-  printStyle.textContent = `
-    #practicePrintRoot {
-      display: none;
-    }
-
-    @media print {
-      @page {
-        size: letter;
-        margin: 0.3in;
-      }
-
-      html,
-      body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
-      }
-
-      body.printing-practice .app-shell {
-        display: none !important;
-      }
-
-      body.printing-practice #practicePrintRoot {
-        display: block !important;
-      }
-
-      .print-sheet {
-        font-family: Arial, Helvetica, sans-serif;
-        color: #14212b;
-        background: white;
-        width: 100%;
-      }
-
-      .print-header {
-        display: grid;
-        grid-template-columns: 1fr 75px;
-        gap: 12px;
-        align-items: start;
-        border-bottom: 4px solid #153b56;
-        padding-bottom: 8px;
-        margin-bottom: 8px;
-      }
-
-      .print-header h1 {
-        margin: 0;
-        color: #153b56;
-        font-size: 24px;
-        line-height: 1.05;
-      }
-
-      .print-header p {
-        margin: 3px 0 0;
-        font-size: 10px;
-        color: #607080;
-        font-weight: 800;
-      }
-
-      .total-box {
-        border: 2px solid #153b56;
-        border-radius: 8px;
-        text-align: center;
-        padding: 6px;
-      }
-
-      .total-box strong {
-        display: block;
-        font-size: 24px;
-        color: #153b56;
-        line-height: 1;
-      }
-
-      .total-box span {
-        font-size: 8px;
-        color: #607080;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-      }
-
-      .print-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr 2fr;
-        gap: 6px;
-        margin-bottom: 9px;
-      }
-
-      .print-info div {
-        border: 1px solid #d7e0e8;
-        background: #f6f9fb;
-        border-radius: 7px;
-        padding: 6px;
-        min-height: 36px;
-      }
-
-      .print-info span {
-        display: block;
-        font-size: 7.5px;
-        color: #6f8193;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        font-weight: 900;
-        margin-bottom: 2px;
-      }
-
-      .print-info strong {
-        display: block;
-        font-size: 10px;
-        line-height: 1.2;
-      }
-
-      .timeline h2,
-      .attendance h2 {
-        margin: 0 0 5px;
-        color: #153b56;
-        font-size: 14px;
-      }
-
-      .print-row {
-        display: grid;
-        grid-template-columns: 58px 1fr;
-        gap: 7px;
-        border: 1px solid #d7e0e8;
-        border-left: 5px solid #153b56;
-        border-radius: 8px;
-        padding: 6px;
-        margin-bottom: 5px;
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-
-      .print-time {
-        background: #edf3f7;
-        border-radius: 6px;
-        padding: 5px;
-        text-align: center;
-      }
-
-      .print-time strong {
-        display: block;
-        font-size: 12px;
-        color: #153b56;
-      }
-
-      .print-time span {
-        display: block;
-        font-size: 8px;
-        color: #607080;
-        font-weight: 800;
-      }
-
-      .print-row-title {
-        font-size: 12.5px;
-        font-weight: 900;
-        color: #14212b;
-        line-height: 1.15;
-      }
-
-      .print-row-title span {
-        display: inline-grid;
-        place-items: center;
-        width: 18px;
-        height: 18px;
-        background: #153b56;
-        color: white;
-        border-radius: 5px;
-        margin-right: 5px;
-        font-size: 10px;
-      }
-
-      .print-row-meta {
-        margin-top: 2px;
-        font-size: 8.5px;
-        color: #607080;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .print-row-summary {
-        margin-top: 4px;
-        font-size: 9.5px;
-        line-height: 1.25;
-        color: #304255;
-      }
-
-      .print-row-notes {
-        margin-top: 4px;
-        padding: 4px;
-        border-radius: 5px;
-        background: #fff8ec;
-        font-size: 9px;
-        line-height: 1.2;
-      }
-
-      .attendance {
-        margin-top: 10px;
-        border-top: 3px solid #153b56;
-        padding-top: 7px;
-        break-inside: avoid;
-      }
-
-      .attendance-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
-      }
-
-      .print-player {
-        border: 1px solid #d7e0e8;
-        border-radius: 6px;
-        padding: 4px 6px;
-        font-size: 9px;
-        font-weight: 800;
-      }
-
-      .print-player span {
-        margin-right: 4px;
-        color: #607080;
-      }
-
-      .empty-print {
-        border: 2px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 14px;
-        text-align: center;
-        color: #607080;
-      }
-
-      .empty-print strong,
-      .empty-print span {
-        display: block;
-      }
-
-      .muted {
-        color: #607080;
-        font-size: 10px;
-      }
-
-      footer {
-        margin-top: 8px;
-        padding-top: 5px;
-        border-top: 1px solid #d7e0e8;
-        color: #8a9aab;
-        font-size: 8px;
-        text-align: center;
-      }
-    }
-  `;
-
-  document.head.appendChild(printStyle);
-  document.body.appendChild(printRoot);
-  document.body.classList.add("printing-practice");
-
-  const cleanup = () => {
-    document.body.classList.remove("printing-practice");
-
-    const root = document.getElementById("practicePrintRoot");
-    const style = document.getElementById("practicePrintStyle");
-
-    if (root) root.remove();
-    if (style) style.remove();
-  };
-
-  window.addEventListener("afterprint", cleanup, { once: true });
-
-  setTimeout(() => {
-    window.print();
-  }, 100);
-
-  setTimeout(cleanup, 15000);
+  window.print();
 }
 
 function backupData() {
@@ -1421,8 +1084,13 @@ function restoreData() {
 
   try {
     const parsed = JSON.parse(raw);
-    state = { ...defaultState(), ...parsed };
 
+    state = {
+      ...defaultState(),
+      ...parsed
+    };
+
+    if (!state.currentPractice) state.currentPractice = defaultState().currentPractice;
     if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
     if (!Array.isArray(state.roster)) state.roster = [];
     if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
@@ -1430,6 +1098,7 @@ function restoreData() {
 
     saveState();
     renderAll();
+
     alert("Backup restored.");
   } catch {
     alert("Could not restore backup.");
@@ -1457,6 +1126,12 @@ function bindEvents() {
     if (category && !category.disabled) {
       activeCategory = category.dataset.category;
       return renderDrills();
+    }
+
+    const mentalButton = event.target.closest("[data-mental-filter]");
+    if (mentalButton) {
+      mentalFilter = mentalButton.dataset.mentalFilter;
+      return renderMental();
     }
 
     const fav = event.target.closest("[data-toggle-favorite]");
@@ -1594,7 +1269,10 @@ function bindEvents() {
     }
 
     if (event.target.matches("[data-block-minutes]")) {
-      const block = state.currentPractice.blocks.find(item => item.id === event.target.dataset.blockMinutes);
+      const block = state.currentPractice.blocks.find(item => {
+        return item.id === event.target.dataset.blockMinutes;
+      });
+
       if (block) {
         block.minutes = Math.max(1, Number(event.target.value) || 1);
         saveState();
@@ -1603,7 +1281,10 @@ function bindEvents() {
     }
 
     if (event.target.matches("[data-block-notes]")) {
-      const block = state.currentPractice.blocks.find(item => item.id === event.target.dataset.blockNotes);
+      const block = state.currentPractice.blocks.find(item => {
+        return item.id === event.target.dataset.blockNotes;
+      });
+
       if (block) {
         block.notes = event.target.value;
         saveState();
