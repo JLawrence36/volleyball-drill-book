@@ -1,4 +1,4 @@
-const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V2";
+const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V3";
 
 const DRILLS = Array.isArray(window.DRILL_DATABASE) ? window.DRILL_DATABASE : [];
 
@@ -187,6 +187,7 @@ const SC_BLOCKS = [
     coaching: "Cooldown is a good time to reinforce the practice message."
   }
 ];
+
 const PRACTICE_TEMPLATES = [
   {
     id: "template_90",
@@ -276,10 +277,10 @@ const PRACTICE_TEMPLATES = [
     ]
   }
 ];
+
 let drillSearch = "";
 let activeCategory = "All";
 let mentalFilter = "All";
-
 let state = defaultState();
 
 function defaultState() {
@@ -516,7 +517,9 @@ function updateBlockMinutes(id, value) {
   const minutes = Math.max(1, Number(value) || 1);
   block.minutes = minutes;
 
-  $("totalMinutes").textContent = `${totalMinutes()}m`;
+  if ($("totalMinutes")) {
+    $("totalMinutes").textContent = `${totalMinutes()}m`;
+  }
 
   saveState();
 }
@@ -531,6 +534,8 @@ function updateBlockNotes(id, notes) {
 }
 
 function updatePracticeDetails() {
+  if (!$("practiceTitle")) return;
+
   state.currentPractice.title = $("practiceTitle").value;
   state.currentPractice.date = $("practiceDate").value;
   state.currentPractice.team = $("practiceTeam").value;
@@ -604,6 +609,8 @@ function deletePractice(id) {
 
 function addPlayer() {
   const input = $("playerNameInput");
+  if (!input) return;
+
   const name = input.value.trim();
 
   if (!name) return;
@@ -639,9 +646,13 @@ function deletePlayer(id) {
   saveState();
   renderRoster();
 }
+
 function findDrillByNumber(number) {
   const cleanNumber = String(number).padStart(2, "0");
-  return DRILLS.find(drill => String(drill.number).padStart(2, "0") === cleanNumber);
+
+  return DRILLS.find(drill => {
+    return String(drill.number).padStart(2, "0") === cleanNumber;
+  });
 }
 
 function buildTemplateBlock(templateBlock) {
@@ -692,11 +703,14 @@ function buildTemplateBlock(templateBlock) {
 }
 
 function templateMinutes(template) {
-  return template.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+  return template.blocks.reduce((sum, block) => {
+    return sum + (Number(block.minutes) || 0);
+  }, 0);
 }
 
 function renderTemplates() {
   const list = $("templateList");
+  if (!list) return;
 
   list.innerHTML = PRACTICE_TEMPLATES.map(template => {
     const minutes = templateMinutes(template);
@@ -750,15 +764,28 @@ function renderTemplates() {
 
 function openTemplateModal() {
   renderTemplates();
-  $("templateModal").classList.remove("hidden");
+
+  const modal = $("templateModal");
+
+  if (!modal) {
+    alert("Template window is missing from index.html.");
+    return;
+  }
+
+  modal.classList.remove("hidden");
 }
 
 function closeTemplateModal() {
-  $("templateModal").classList.add("hidden");
+  const modal = $("templateModal");
+
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
 function loadTemplate(templateId) {
   const template = PRACTICE_TEMPLATES.find(item => item.id === templateId);
+
   if (!template) return;
 
   if (state.currentPractice.blocks.length > 0) {
@@ -782,7 +809,10 @@ function loadTemplate(templateId) {
   closeTemplateModal();
   switchTab("plan");
 }
+
 function openCustomModal() {
+  if (!$("customModal")) return;
+
   $("customTitle").value = "";
   $("customMinutes").value = "";
   $("customNotes").value = "";
@@ -790,7 +820,9 @@ function openCustomModal() {
 }
 
 function closeCustomModal() {
-  $("customModal").classList.add("hidden");
+  if ($("customModal")) {
+    $("customModal").classList.add("hidden");
+  }
 }
 
 function saveCustomBlock() {
@@ -821,10 +853,14 @@ function saveCustomBlock() {
 }
 
 function closeDetails() {
-  $("detailsModal").classList.add("hidden");
+  if ($("detailsModal")) {
+    $("detailsModal").classList.add("hidden");
+  }
 }
 
 function openDetails(item, type) {
+  if (!$("detailsContent") || !$("detailsModal")) return;
+
   let title = "";
   let meta = "";
   let summary = "";
@@ -880,7 +916,9 @@ function openDetails(item, type) {
     ` : ""}
 
     <div class="bottom-actions">
-      <button class="btn dark" data-modal-add="${escapeHtml(item.id)}" data-modal-type="${escapeHtml(type)}">＋ Add to Practice</button>
+      <button class="btn dark" data-modal-add="${escapeHtml(item.id)}" data-modal-type="${escapeHtml(type)}">
+        ＋ Add to Practice
+      </button>
     </div>
   `;
 
@@ -932,93 +970,6 @@ function filteredDrills() {
   });
 }
 
-function renderPlan() {
-  const practice = state.currentPractice;
-
-  $("practiceTitle").value = practice.title || "";
-  $("practiceDate").value = practice.date || today();
-  $("practiceTeam").value = practice.team || "";
-  $("practiceFocus").value = practice.focus || "";
-  $("totalMinutes").textContent = `${totalMinutes()}m`;
-
-  const list = $("planList");
-  const empty = $("emptyPlan");
-
-  if (practice.blocks.length === 0) {
-    list.innerHTML = "";
-    empty.style.display = "block";
-    return;
-  }
-
-  empty.style.display = "none";
-
-  list.innerHTML = practice.blocks.map((block, index) => {
-    const typeClass =
-      block.type === "mental" ? "mental" :
-      block.type === "sc" ? "sc" :
-      block.type === "custom" ? "custom" :
-      "";
-
-    return `
-      <div class="plan-block">
-        <div class="plan-block-top">
-          <div class="block-num ${typeClass}">${index + 1}</div>
-
-          <div>
-            <h3 class="block-title">${escapeHtml(block.title)}</h3>
-
-            <div class="block-meta">
-              ${escapeHtml(block.category || block.type)}
-              ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
-            </div>
-
-            <div class="block-time-edit">
-              <span>Minutes</span>
-              <input 
-                type="number" 
-                min="1" 
-                max="180" 
-                value="${escapeHtml(block.minutes || 1)}" 
-                data-block-minutes="${escapeHtml(block.id)}"
-              />
-            </div>
-          </div>
-
-          <div class="block-actions">
-            <button class="icon-btn" data-move-up="${escapeHtml(block.id)}">↑</button>
-            <button class="icon-btn" data-move-down="${escapeHtml(block.id)}">↓</button>
-            <button class="icon-btn" data-duplicate-block="${escapeHtml(block.id)}">⧉</button>
-            <button class="icon-btn danger" data-remove-block="${escapeHtml(block.id)}">×</button>
-          </div>
-        </div>
-
-        <textarea class="block-notes" data-block-notes="${escapeHtml(block.id)}" placeholder="Coach notes for this block...">${escapeHtml(block.notes || "")}</textarea>
-      </div>
-    `;
-  }).join("");
-}
-
-function renderCategories() {
-  const categoryChips = $("categoryChips");
-  const realCategories = CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category));
-  const categories = ["All", "Favorites", ...realCategories];
-
-  if (!categories.includes(activeCategory)) {
-    activeCategory = "All";
-  }
-
-  categoryChips.innerHTML = categories.map(category => {
-    const label = category === "Favorites"
-      ? `★ Favorites (${state.favoriteDrills.length})`
-      : category;
-
-    return `
-      <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">
-        ${escapeHtml(label)}
-      </button>
-    `;
-  }).join("");
-}
 function categoryIcon(category) {
   const icons = {
     "Favorites": "★",
@@ -1095,14 +1046,110 @@ function renderCategoryCards() {
   `;
 }
 
+function renderPlan() {
+  if (!$("practiceTitle")) return;
+
+  const practice = state.currentPractice;
+
+  $("practiceTitle").value = practice.title || "";
+  $("practiceDate").value = practice.date || today();
+  $("practiceTeam").value = practice.team || "";
+  $("practiceFocus").value = practice.focus || "";
+  $("totalMinutes").textContent = `${totalMinutes()}m`;
+
+  const list = $("planList");
+  const empty = $("emptyPlan");
+
+  if (practice.blocks.length === 0) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+
+  empty.style.display = "none";
+
+  list.innerHTML = practice.blocks.map((block, index) => {
+    const typeClass =
+      block.type === "mental" ? "mental" :
+      block.type === "sc" ? "sc" :
+      block.type === "custom" ? "custom" :
+      "";
+
+    return `
+      <div class="plan-block">
+        <div class="plan-block-top">
+          <div class="block-num ${typeClass}">${index + 1}</div>
+
+          <div>
+            <h3 class="block-title">${escapeHtml(block.title)}</h3>
+
+            <div class="block-meta">
+              ${escapeHtml(block.category || block.type)}
+              ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
+            </div>
+
+            <div class="block-time-edit">
+              <span>Minutes</span>
+              <input 
+                type="number" 
+                min="1" 
+                max="180" 
+                value="${escapeHtml(block.minutes || 1)}" 
+                data-block-minutes="${escapeHtml(block.id)}"
+              />
+            </div>
+          </div>
+
+          <div class="block-actions">
+            <button type="button" class="icon-btn" data-move-up="${escapeHtml(block.id)}">↑</button>
+            <button type="button" class="icon-btn" data-move-down="${escapeHtml(block.id)}">↓</button>
+            <button type="button" class="icon-btn" data-duplicate-block="${escapeHtml(block.id)}">⧉</button>
+            <button type="button" class="icon-btn danger" data-remove-block="${escapeHtml(block.id)}">×</button>
+          </div>
+        </div>
+
+        <textarea class="block-notes" data-block-notes="${escapeHtml(block.id)}" placeholder="Coach notes for this block...">${escapeHtml(block.notes || "")}</textarea>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderCategories() {
+  const categoryChips = $("categoryChips");
+  if (!categoryChips) return;
+
+  const realCategories = CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category));
+  const categories = ["All", "Favorites", ...realCategories];
+
+  if (!categories.includes(activeCategory)) {
+    activeCategory = "All";
+  }
+
+  categoryChips.innerHTML = categories.map(category => {
+    const label = category === "Favorites"
+      ? `★ Favorites (${state.favoriteDrills.length})`
+      : category;
+
+    return `
+      <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">
+        ${escapeHtml(label)}
+      </button>
+    `;
+  }).join("");
+}
+
 function renderDrills() {
+  if (!$("drillLibrary")) return;
+
   renderCategories();
 
   const list = $("drillLibrary");
   const drills = filteredDrills();
   const searching = drillSearch.trim().length > 0;
 
-  $("drillCountBadge").textContent = `${drills.length} drills`;
+  if ($("drillCountBadge")) {
+    $("drillCountBadge").textContent = `${drills.length} drills`;
+  }
 
   if (!DRILLS.length) {
     list.innerHTML = `
@@ -1201,6 +1248,8 @@ function renderDrills() {
 }
 
 function renderMental() {
+  if (!$("mentalLibrary")) return;
+
   $all("[data-mental-filter]").forEach(button => {
     button.classList.toggle("active", button.dataset.mentalFilter === mentalFilter);
   });
@@ -1229,6 +1278,8 @@ function renderMental() {
 }
 
 function renderSC() {
+  if (!$("scLibrary")) return;
+
   $("scLibrary").innerHTML = SC_BLOCKS.map((item, index) => `
     <div class="library-card">
       <div>
@@ -1249,16 +1300,18 @@ function renderSC() {
 }
 
 function renderRoster() {
+  if (!$("rosterList")) return;
+
   const list = $("rosterList");
   const empty = $("emptyRoster");
 
   if (!state.roster.length) {
     list.innerHTML = "";
-    empty.style.display = "block";
+    if (empty) empty.style.display = "block";
     return;
   }
 
-  empty.style.display = "none";
+  if (empty) empty.style.display = "none";
 
   list.innerHTML = state.roster.map(player => `
     <div class="roster-card ${player.present ? "present" : ""}">
@@ -1273,16 +1326,18 @@ function renderRoster() {
 }
 
 function renderSaved() {
+  if (!$("savedList")) return;
+
   const list = $("savedList");
   const empty = $("emptySaved");
 
   if (!state.savedPractices.length) {
     list.innerHTML = "";
-    empty.style.display = "block";
+    if (empty) empty.style.display = "block";
     return;
   }
 
-  empty.style.display = "none";
+  if (empty) empty.style.display = "none";
 
   list.innerHTML = state.savedPractices.map(practice => {
     const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
@@ -1327,7 +1382,7 @@ function backupData() {
 }
 
 function restoreData() {
-  const raw = $("restoreText").value.trim();
+  const raw = $("restoreText") ? $("restoreText").value.trim() : "";
 
   if (!raw) {
     alert("Paste backup text first.");
@@ -1375,10 +1430,6 @@ function printPracticePlan() {
 
   const total = blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
 
-  function minuteRange(start, end) {
-    return `${start}–${end} min`;
-  }
-
   let runningMinute = 0;
 
   const blocksHtml = blocks.length
@@ -1404,7 +1455,7 @@ function printPracticePlan() {
               <div class="block-main">
                 <h2>${escapeHtml(block.title)}</h2>
                 <div class="block-meta">
-                  <span>${escapeHtml(minuteRange(start, end))}</span>
+                  <span>${start}–${end} min</span>
                   <span>${escapeHtml(block.minutes)} min</span>
                   <span>${escapeHtml(block.category || block.type || "Block")}</span>
                 </div>
@@ -1468,7 +1519,6 @@ function printPracticePlan() {
 
       <style>
         @page { size: letter; margin: 0.45in; }
-
         * { box-sizing: border-box; }
 
         body {
@@ -1796,48 +1846,82 @@ function initEvents() {
     }
   });
 
-  $("drillSearch").addEventListener("input", event => {
-    drillSearch = event.target.value;
-    renderDrills();
-  });
+  if ($("drillSearch")) {
+    $("drillSearch").addEventListener("input", event => {
+      drillSearch = event.target.value;
+      renderDrills();
+    });
+  }
 
-  $("addPlayerBtn").addEventListener("click", addPlayer);
+  if ($("addPlayerBtn")) {
+    $("addPlayerBtn").addEventListener("click", addPlayer);
+  }
 
-  $("playerNameInput").addEventListener("keydown", event => {
-    if (event.key === "Enter") addPlayer();
-  });
-$("openTemplatesBtn").addEventListener("click", openTemplateModal);
-$("closeTemplateBtn").addEventListener("click", closeTemplateModal);
+  if ($("playerNameInput")) {
+    $("playerNameInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") addPlayer();
+    });
+  }
 
-$("templateModal").addEventListener("click", event => {
-  if (event.target.id === "templateModal") closeTemplateModal();
-});
-  $("addCustomBlockBtn").addEventListener("click", openCustomModal);
-  $("closeCustomBtn").addEventListener("click", closeCustomModal);
-  $("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
+  if ($("openTemplatesBtn")) {
+    $("openTemplatesBtn").addEventListener("click", openTemplateModal);
+  }
 
-  $("closeDetailsBtn").addEventListener("click", closeDetails);
+  if ($("closeTemplateBtn")) {
+    $("closeTemplateBtn").addEventListener("click", closeTemplateModal);
+  }
 
-  $("detailsModal").addEventListener("click", event => {
-    if (event.target.id === "detailsModal") closeDetails();
-  });
+  if ($("templateModal")) {
+    $("templateModal").addEventListener("click", event => {
+      if (event.target.id === "templateModal") closeTemplateModal();
+    });
+  }
 
-  $("customModal").addEventListener("click", event => {
-    if (event.target.id === "customModal") closeCustomModal();
-  });
+  if ($("addCustomBlockBtn")) {
+    $("addCustomBlockBtn").addEventListener("click", openCustomModal);
+  }
 
-  $("savePracticeBtn").addEventListener("click", saveCurrentPractice);
+  if ($("closeCustomBtn")) {
+    $("closeCustomBtn").addEventListener("click", closeCustomModal);
+  }
 
-  $("printPracticeBtn").addEventListener("click", () => {
-    if (typeof printPracticePlan === "function") {
+  if ($("saveCustomBlockBtn")) {
+    $("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
+  }
+
+  if ($("closeDetailsBtn")) {
+    $("closeDetailsBtn").addEventListener("click", closeDetails);
+  }
+
+  if ($("detailsModal")) {
+    $("detailsModal").addEventListener("click", event => {
+      if (event.target.id === "detailsModal") closeDetails();
+    });
+  }
+
+  if ($("customModal")) {
+    $("customModal").addEventListener("click", event => {
+      if (event.target.id === "customModal") closeCustomModal();
+    });
+  }
+
+  if ($("savePracticeBtn")) {
+    $("savePracticeBtn").addEventListener("click", saveCurrentPractice);
+  }
+
+  if ($("printPracticeBtn")) {
+    $("printPracticeBtn").addEventListener("click", () => {
       printPracticePlan();
-    } else {
-      window.print();
-    }
-  });
+    });
+  }
 
-  $("backupBtn").addEventListener("click", backupData);
-  $("restoreBtn").addEventListener("click", restoreData);
+  if ($("backupBtn")) {
+    $("backupBtn").addEventListener("click", backupData);
+  }
+
+  if ($("restoreBtn")) {
+    $("restoreBtn").addEventListener("click", restoreData);
+  }
 
   document.addEventListener("input", event => {
     const notesInput = event.target.closest("[data-block-notes]");
@@ -1851,14 +1935,16 @@ $("templateModal").addEventListener("click", event => {
       updateBlockMinutes(minutesInput.dataset.blockMinutes, minutesInput.value);
     }
   });
-const templateBtn = event.target.closest("[data-load-template]");
-if (templateBtn) {
-  event.preventDefault();
-  event.stopPropagation();
-  loadTemplate(templateBtn.dataset.loadTemplate);
-  return;
-}
+
   document.addEventListener("click", event => {
+    const templateBtn = event.target.closest("[data-load-template]");
+    if (templateBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      loadTemplate(templateBtn.dataset.loadTemplate);
+      return;
+    }
+
     const favoriteBtn = event.target.closest("[data-toggle-favorite]");
     if (favoriteBtn) {
       event.preventDefault();
@@ -1869,6 +1955,7 @@ if (templateBtn) {
 
     const categoryBtn = event.target.closest("[data-category]");
     if (categoryBtn) {
+      event.preventDefault();
       activeCategory = categoryBtn.dataset.category || "All";
       renderDrills();
       return;
@@ -1876,6 +1963,7 @@ if (templateBtn) {
 
     const mentalBtn = event.target.closest("[data-mental-filter]");
     if (mentalBtn) {
+      event.preventDefault();
       mentalFilter = mentalBtn.dataset.mentalFilter || "All";
       renderMental();
       return;
@@ -1883,6 +1971,7 @@ if (templateBtn) {
 
     const addDrillBtn = event.target.closest("[data-add-drill]");
     if (addDrillBtn) {
+      event.preventDefault();
       const drill = DRILLS.find(item => item.id === addDrillBtn.dataset.addDrill);
       if (drill) addBlock(buildBlockFromDrill(drill));
       return;
@@ -1890,6 +1979,7 @@ if (templateBtn) {
 
     const openDrillBtn = event.target.closest("[data-open-drill]");
     if (openDrillBtn) {
+      event.preventDefault();
       const drill = DRILLS.find(item => item.id === openDrillBtn.dataset.openDrill);
       if (drill) openDetails(drill, "drill");
       return;
@@ -1897,6 +1987,7 @@ if (templateBtn) {
 
     const addMentalBtn = event.target.closest("[data-add-mental]");
     if (addMentalBtn) {
+      event.preventDefault();
       const item = MENTAL_BLOCKS.find(block => block.id === addMentalBtn.dataset.addMental);
       if (item) addBlock(buildBlockFromLibrary(item, "mental"));
       return;
@@ -1904,6 +1995,7 @@ if (templateBtn) {
 
     const openMentalBtn = event.target.closest("[data-open-mental]");
     if (openMentalBtn) {
+      event.preventDefault();
       const item = MENTAL_BLOCKS.find(block => block.id === openMentalBtn.dataset.openMental);
       if (item) openDetails(item, "mental");
       return;
@@ -1911,6 +2003,7 @@ if (templateBtn) {
 
     const addSCBtn = event.target.closest("[data-add-sc]");
     if (addSCBtn) {
+      event.preventDefault();
       const item = SC_BLOCKS.find(block => block.id === addSCBtn.dataset.addSc);
       if (item) addBlock(buildBlockFromLibrary(item, "sc"));
       return;
@@ -1918,6 +2011,7 @@ if (templateBtn) {
 
     const openSCBtn = event.target.closest("[data-open-sc]");
     if (openSCBtn) {
+      event.preventDefault();
       const item = SC_BLOCKS.find(block => block.id === openSCBtn.dataset.openSc);
       if (item) openDetails(item, "sc");
       return;
@@ -1925,60 +2019,71 @@ if (templateBtn) {
 
     const removeBlockBtn = event.target.closest("[data-remove-block]");
     if (removeBlockBtn) {
+      event.preventDefault();
       removeBlock(removeBlockBtn.dataset.removeBlock);
       return;
     }
 
     const duplicateBlockBtn = event.target.closest("[data-duplicate-block]");
     if (duplicateBlockBtn) {
+      event.preventDefault();
       duplicateBlock(duplicateBlockBtn.dataset.duplicateBlock);
       return;
     }
 
     const moveUpBtn = event.target.closest("[data-move-up]");
     if (moveUpBtn) {
+      event.preventDefault();
       moveBlock(moveUpBtn.dataset.moveUp, -1);
       return;
     }
 
     const moveDownBtn = event.target.closest("[data-move-down]");
     if (moveDownBtn) {
+      event.preventDefault();
       moveBlock(moveDownBtn.dataset.moveDown, 1);
       return;
     }
 
     const togglePlayerBtn = event.target.closest("[data-toggle-player]");
     if (togglePlayerBtn) {
+      event.preventDefault();
       togglePlayer(togglePlayerBtn.dataset.togglePlayer);
       return;
     }
 
     const deletePlayerBtn = event.target.closest("[data-delete-player]");
     if (deletePlayerBtn) {
+      event.preventDefault();
       deletePlayer(deletePlayerBtn.dataset.deletePlayer);
       return;
     }
 
     const loadPracticeBtn = event.target.closest("[data-load-practice]");
     if (loadPracticeBtn) {
+      event.preventDefault();
       loadPractice(loadPracticeBtn.dataset.loadPractice);
       return;
     }
 
     const dupePracticeBtn = event.target.closest("[data-dupe-practice]");
     if (dupePracticeBtn) {
+      event.preventDefault();
       duplicatePractice(dupePracticeBtn.dataset.dupePractice);
       return;
     }
 
     const deletePracticeBtn = event.target.closest("[data-delete-practice]");
     if (deletePracticeBtn) {
+      event.preventDefault();
       deletePractice(deletePracticeBtn.dataset.deletePractice);
       return;
     }
 
     const modalAddBtn = event.target.closest("[data-modal-add]");
     if (modalAddBtn) {
+      event.preventDefault();
+
       const type = modalAddBtn.dataset.modalType;
       const id = modalAddBtn.dataset.modalAdd;
 
