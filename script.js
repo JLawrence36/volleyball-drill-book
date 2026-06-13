@@ -1,215 +1,252 @@
-const STORAGE_KEY = "VOLLEYBALL_DRILL_BOOK_V1";
+const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V2";
 
-const CATEGORIES = [
-  "Attacking",
+const DRILLS = Array.isArray(window.DRILL_DATABASE) ? window.DRILL_DATABASE : [];
+
+const CATEGORY_ORDER = [
+  "Warmup",
+  "Serving",
   "Serve Receive",
   "Ball Control",
-  "Serving",
-  "Competition",
   "Setting",
+  "Attacking",
   "Defense",
   "Team Systems",
-  "Warmup",
-  "Conditioning",
-  "Mental Game",
-  "Custom"
+  "Competition"
 ];
 
-const BUILT_IN_DRILLS = window.DRILL_DATABASE || [
+const MENTAL_BLOCKS = [
   {
-    id: "drill_001",
-    number: "01",
-    category: "Defense",
-    name: "Reading the Hitter (Block Read)",
-    source: "GMS",
-    players: "6-12",
-    time: 15,
-    level: "Intermediate",
-    skills: "Blocking, Reading",
-    purpose: "Train blockers and defenders to read the attacker's approach, arm, and shoulders rather than the ball.",
-    setup: "Coach or hitter on a box at the net. Blockers in front, back-row defenders in base position.",
-    run: [
-      "Hitter on the box attacks to predetermined zones, exaggerating shoulder/arm cues.",
-      "Blockers call the seam and press over; defenders read around the block.",
-      "Progress from tossed attacks to live swings off a set.",
-      "Add a second hitter so blockers must choose who to commit to."
+    id: "mental_01",
+    category: "Reset",
+    title: "Breath Reset",
+    minutes: 5,
+    summary: "Teach a quick 4-count reset players can use between points.",
+    details: [
+      "Inhale for 4 counts.",
+      "Hold for 2 counts.",
+      "Exhale for 4 counts.",
+      "Say a cue word like next, calm, or attack."
     ],
-    coaching: "Eyes sequence: ball → setter → hitter's approach angle → hitting arm. Reward correct reads even if the dig fails.",
-    evaluate: "Footwork, timing at the net, reading cues, hands penetration over the net.",
-    custom: false
+    coaching: "The goal is to give players a routine they can use after mistakes, missed serves, or pressure points."
   },
   {
-    id: "drill_002",
-    number: "02",
-    category: "Serve Receive",
-    name: "Serve & Pass Wash",
-    source: "GMS",
-    players: "8-16",
-    time: 20,
-    level: "All levels",
-    skills: "Serving, Passing",
-    purpose: "Game-like serving and passing under scoring pressure.",
-    setup: "Servers on one side, full serve-receive formation on the other, target/setter at the net.",
-    run: [
-      "Server serves a tough, in-bounds serve.",
-      "Passers run their serve-receive system and pass to target.",
-      "Score the pass 0-3. Passing side must wash by winning two rallies to rotate.",
-      "Rotate servers and passers; track team passing average."
+    id: "mental_02",
+    category: "Pressure",
+    title: "3-Step Serve Routine",
+    minutes: 5,
+    summary: "Build a repeatable routine before every serve.",
+    details: [
+      "Step behind the line.",
+      "Breathe and choose the target.",
+      "Say the cue word and serve with confidence."
     ],
-    coaching: "Emphasize platform angle and posture to target. Servers must serve aggressively in-bounds, not lob.",
-    evaluate: "Passing accuracy, serving aggressiveness and accuracy, communication on seams.",
-    custom: false
+    coaching: "A routine gives the brain something to do so nerves do not fill the space."
   },
   {
-    id: "drill_003",
-    number: "03",
-    category: "Competition",
-    name: "Queen / King of the Court",
-    source: "AOC",
-    players: "9-18",
-    time: 20,
-    level: "All levels",
-    skills: "All-around, Competing",
-    purpose: "High-rep competitive game that reveals who competes, adapts, and wins points with changing teammates.",
-    setup: "Teams of 3 or 2. One Queen side defends; challenger teams rotate in from the other side.",
-    run: [
-      "Challenger team initiates with a serve or free ball.",
-      "Win the rally on the Queen side to earn a point and stay.",
-      "Challengers who win move to the Queen side.",
-      "Play to a set score or time; track individual points."
+    id: "mental_03",
+    category: "Reset",
+    title: "5-Second Reset",
+    minutes: 4,
+    summary: "Teach players to flush the last point and get ready for the next one.",
+    details: [
+      "Mistake happens.",
+      "Player turns away from the net.",
+      "One breath.",
+      "Cue word.",
+      "Eyes back to the court."
     ],
-    coaching: "Keep the pace fast with a ball cart. Great for evaluating competitiveness and adaptability.",
-    evaluate: "Competing under pressure, all-around skill, communication with new teammates, consistency.",
-    custom: false
+    coaching: "You can only play the ball in front of you. The last point is gone."
   },
   {
-    id: "drill_004",
-    number: "04",
-    category: "Ball Control",
-    name: "Pepper Progression",
-    source: "AOC",
-    players: "Pairs",
-    time: 10,
-    level: "Beginner",
-    skills: "Passing, Setting, Hitting",
-    purpose: "Warm-up and ball-control fundamentals using a controlled dig-set-hit sequence between partners.",
-    setup: "Partners 10-15 feet apart, one ball per pair.",
-    run: [
-      "Dig to self then to partner; partner sets back.",
-      "Add a controlled downball or roll shot to restart the sequence.",
-      "Progress to one-touch pepper.",
-      "Add movement before each contact."
+    id: "mental_04",
+    category: "Confidence",
+    title: "Cue Words & Reframes",
+    minutes: 6,
+    summary: "Players build simple phrases to use during pressure.",
+    details: [
+      "Ask each player to pick one cue word.",
+      "Examples: tall, attack, calm, platform, next.",
+      "Practice saying it before pressure reps.",
+      "Use it during serving or serve receive."
     ],
-    coaching: "Insist on calling mine, facing the target, and controlled contacts.",
-    evaluate: "Ball control, platform consistency, communication, hand-setting form.",
-    custom: false
+    coaching: "Players are always talking to themselves. Make it sound like a teammate, not a critic."
   },
   {
-    id: "drill_005",
-    number: "05",
-    category: "Setting",
-    name: "Sits Test (Setter Accuracy)",
-    source: "AOC",
-    players: "Individual",
-    time: 10,
-    level: "Intermediate",
-    skills: "Setting",
-    purpose: "Test setting accuracy, agility, and conditioning in a continuous measurable format.",
-    setup: "Setter at target zone with a ball, coach feeding.",
-    run: [
-      "Setter sits, sets to self, stands, sets to a target, then sits again.",
-      "Repeat continuously for reps or time.",
-      "Count accurate sets to the target zone.",
-      "Test both front and back sets."
+    id: "mental_05",
+    category: "Team",
+    title: "Next-Ball Huddle",
+    minutes: 5,
+    summary: "Create a team habit after mistakes.",
+    details: [
+      "After an error, nearest players come together fast.",
+      "Use one short phrase: next ball.",
+      "No blame, no lecture.",
+      "Reset and get back into position."
     ],
-    coaching: "Hand position, square to target, consistent release point.",
-    evaluate: "Setting accuracy, agility, conditioning, consistency under fatigue.",
-    custom: false
+    coaching: "The best teams recover fast. Body language after errors matters."
   },
   {
-    id: "drill_006",
-    number: "06",
-    category: "Serving",
-    name: "Serving Targets / Zones",
-    source: "GMS",
-    players: "Any",
-    time: 15,
-    level: "All levels",
-    skills: "Serving",
-    purpose: "Develop serving accuracy to specific zones and aggressiveness under a scoring system.",
-    setup: "Place targets in zones 1, 5, 6 and short seams. Servers behind the end line.",
-    run: [
-      "Servers take 10 serves, scoring points for hitting target zones.",
-      "Award bonus points for short serves and seam serves.",
-      "Track misses separately.",
-      "Add pressure by requiring a target number of makes."
+    id: "mental_06",
+    category: "Pressure",
+    title: "Pressure Point Simulation",
+    minutes: 10,
+    summary: "Start drills at pressure scores so players get used to late-set stress.",
+    details: [
+      "Start at 23-23, 24-24, or down 22-24.",
+      "Require a serve, pass, or sideout goal.",
+      "Replay the scenario several times.",
+      "Debrief decision-making after each round."
     ],
-    coaching: "Consistent toss and contact. Aggressive but in-bounds. Vary depth, not just side-to-side.",
-    evaluate: "Serving accuracy, aggressiveness, consistency, ability to hit zones on demand.",
-    custom: false
+    coaching: "Pressure gets easier when players have already practiced the moment."
   }
 ];
 
-let appState = {
-  favorites: [],
-  customDrills: [],
-  practice: [],
-  settings: {
-    programName: "Rising Sun Volleyball",
-    coachName: "Coach"
+const SC_BLOCKS = [
+  {
+    id: "sc_01",
+    category: "Warmup",
+    title: "Dynamic Warmup",
+    minutes: 10,
+    summary: "Prepare hips, ankles, shoulders, and core before volleyball work.",
+    details: [
+      "Jog or shuffle for 2 minutes.",
+      "High knees, butt kicks, and skips.",
+      "Walking lunges and leg swings.",
+      "Arm circles, band pull-aparts, and shoulder mobility."
+    ],
+    coaching: "Warmup should raise temperature, open joints, and prepare players to jump and change direction."
   },
-  practiceDetails: {
-    name: "",
-    date: "",
+  {
+    id: "sc_02",
+    category: "Agility",
+    title: "Court Agility Block",
+    minutes: 12,
+    summary: "Short movement reps for volleyball footwork and change of direction.",
+    details: [
+      "Shuffle to the sideline and back.",
+      "Drop step and sprint.",
+      "Three-cone reaction shuffle.",
+      "Finish with court-line mirror movement."
+    ],
+    coaching: "Quality matters more than exhaustion. Players should move low, balanced, and fast."
+  },
+  {
+    id: "sc_03",
+    category: "Speed",
+    title: "First-Step Speed",
+    minutes: 10,
+    summary: "Train explosive first movement to the ball.",
+    details: [
+      "Start in ready position.",
+      "Coach points or calls a direction.",
+      "Player explodes for 3-5 steps.",
+      "Reset and repeat."
+    ],
+    coaching: "Volleyball speed is mostly reaction and first-step quickness."
+  },
+  {
+    id: "sc_04",
+    category: "Vertical",
+    title: "Jump Mechanics",
+    minutes: 12,
+    summary: "Improve jump technique and safe landing.",
+    details: [
+      "Arm swing jumps.",
+      "Approach jumps without ball.",
+      "Block jumps with soft landing.",
+      "Stick the landing for balance."
+    ],
+    coaching: "Land softly with knees tracking over toes. Quality jumps beat sloppy volume."
+  },
+  {
+    id: "sc_05",
+    category: "Shoulder Care",
+    title: "Shoulder Prehab",
+    minutes: 8,
+    summary: "Protect shoulders before or after high-volume hitting.",
+    details: [
+      "Band external rotations.",
+      "Band pull-aparts.",
+      "Scap pushups.",
+      "Light Y-T-W raises."
+    ],
+    coaching: "Use this before hitting-heavy days and after tournaments."
+  },
+  {
+    id: "sc_06",
+    category: "Cooldown",
+    title: "Cooldown & Stretch",
+    minutes: 7,
+    summary: "Bring the team down and close practice with recovery.",
+    details: [
+      "Light jog or walk.",
+      "Hamstring, quad, calf, hip flexor stretch.",
+      "Shoulder and chest stretch.",
+      "One team takeaway before leaving."
+    ],
+    coaching: "Cooldown is a good time to reinforce the practice message."
+  }
+];
+
+let state = {
+  activeTab: "plan",
+  currentPractice: {
+    id: makeId("practice"),
+    title: "",
+    date: today(),
     team: "",
-    focus: ""
-  }
+    focus: "",
+    blocks: []
+  },
+  roster: [],
+  savedPractices: []
 };
 
-let activeTab = "home";
-let searchText = "";
-let categoryFilter = "All";
-let levelFilter = "All";
-let timeFilter = "all";
+let drillSearch = "";
+let activeCategory = "All";
+let mentalFilter = "All";
+
+function makeId(prefix) {
+  if (window.crypto && crypto.randomUUID) {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
 
-  if (!saved) {
-    return;
-  }
+  if (!saved) return;
 
   try {
-    appState = JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    state = {
+      ...state,
+      ...parsed,
+      currentPractice: {
+        ...state.currentPractice,
+        ...(parsed.currentPractice || {})
+      }
+    };
   } catch {
     saveState();
   }
 
-  if (!Array.isArray(appState.favorites)) appState.favorites = [];
-  if (!Array.isArray(appState.customDrills)) appState.customDrills = [];
-  if (!Array.isArray(appState.practice)) appState.practice = [];
-  if (!appState.settings) appState.settings = {};
-  if (!appState.practiceDetails) appState.practiceDetails = {};
-}
-
-function allDrills() {
-  return [...BUILT_IN_DRILLS, ...appState.customDrills];
-}
-
-function makeId(prefix) {
-  if (crypto.randomUUID) {
-    return `${prefix}_${crypto.randomUUID()}`;
-  }
-
-  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+  if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
+  if (!Array.isArray(state.roster)) state.roster = [];
+  if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
 }
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, function (char) {
+  return String(value ?? "").replace(/[&<>"']/g, char => {
     return {
       "&": "&amp;",
       "<": "&lt;",
@@ -220,96 +257,21 @@ function escapeHtml(value) {
   });
 }
 
-function renderTextBlock(text) {
-  return escapeHtml(text).replace(/\n/g, "<br>");
-}
-
-function getDrillById(id) {
-  return allDrills().find(drill => drill.id === id);
-}
-
-function isFavorite(id) {
-  return appState.favorites.includes(id);
-}
-
-function toggleFavorite(id) {
-  if (isFavorite(id)) {
-    appState.favorites = appState.favorites.filter(item => item !== id);
-  } else {
-    appState.favorites.push(id);
+function formatDate(value) {
+  if (!value) return "";
+  try {
+    return new Date(value + "T00:00:00").toLocaleDateString();
+  } catch {
+    return value;
   }
-
-  saveState();
-  renderAll();
 }
 
-function addToPractice(id) {
-  const drill = getDrillById(id);
-
-  if (!drill) return;
-
-  appState.practice.push({
-    id: makeId("practice"),
-    drillId: id,
-    minutes: drill.time || 10,
-    notes: ""
-  });
-
-  saveState();
-  renderAll();
-  switchTab("planner");
-}
-
-function removeFromPractice(practiceId) {
-  appState.practice = appState.practice.filter(item => item.id !== practiceId);
-  saveState();
-  renderAll();
-}
-
-function updatePracticeItem(practiceId, field, value) {
-  const item = appState.practice.find(item => item.id === practiceId);
-
-  if (!item) return;
-
-  if (field === "minutes") {
-    item.minutes = Number(value) || 0;
-  } else {
-    item[field] = value;
-  }
-
-  saveState();
-  renderAll();
-}
-
-function getFilteredDrills() {
-  return allDrills().filter(drill => {
-    const searchable = [
-      drill.number,
-      drill.category,
-      drill.name,
-      drill.source,
-      drill.players,
-      drill.time,
-      drill.level,
-      drill.skills,
-      drill.purpose,
-      drill.setup,
-      Array.isArray(drill.run) ? drill.run.join(" ") : drill.run,
-      drill.coaching,
-      drill.evaluate
-    ].join(" ").toLowerCase();
-
-    const matchesSearch = !searchText || searchable.includes(searchText.toLowerCase());
-    const matchesCategory = categoryFilter === "All" || drill.category === categoryFilter;
-    const matchesLevel = levelFilter === "All" || drill.level === levelFilter;
-    const matchesTime = timeFilter === "all" || Number(drill.time) <= Number(timeFilter);
-
-    return matchesSearch && matchesCategory && matchesLevel && matchesTime;
-  });
+function totalMinutes() {
+  return state.currentPractice.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
 }
 
 function switchTab(tabName) {
-  activeTab = tabName;
+  state.activeTab = tabName;
 
   document.querySelectorAll(".tab").forEach(tab => {
     tab.classList.toggle("active", tab.dataset.tab === tabName);
@@ -319,472 +281,767 @@ function switchTab(tabName) {
     screen.classList.toggle("active", screen.id === tabName);
   });
 
+  saveState();
   renderAll();
 }
 
-function renderFilters() {
-  const categorySelect = document.getElementById("categoryFilter");
-  const levelSelect = document.getElementById("levelFilter");
-  const customCategory = document.getElementById("customCategory");
-
-  const categories = ["All", ...CATEGORIES];
-  const levels = ["All", "Beginner", "Intermediate", "Advanced", "All levels"];
-
-  categorySelect.innerHTML = categories.map(category => {
-    return `<option value="${escapeHtml(category)}" ${category === categoryFilter ? "selected" : ""}>${escapeHtml(category)}</option>`;
-  }).join("");
-
-  levelSelect.innerHTML = levels.map(level => {
-    return `<option value="${escapeHtml(level)}" ${level === levelFilter ? "selected" : ""}>${escapeHtml(level)}</option>`;
-  }).join("");
-
-  customCategory.innerHTML = CATEGORIES.map(category => {
-    return `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`;
-  }).join("");
-
-  document.getElementById("timeFilter").value = timeFilter;
+function buildBlockFromDrill(drill) {
+  return {
+    id: makeId("block"),
+    type: "drill",
+    title: drill.name,
+    category: drill.category,
+    minutes: Number(drill.time) || 10,
+    summary: drill.purpose || "",
+    details: Array.isArray(drill.run) ? drill.run : [],
+    coaching: drill.coaching || "",
+    evaluate: drill.evaluate || "",
+    notes: "",
+    sourceId: drill.id
+  };
 }
 
-function renderHome() {
-  const drills = allDrills();
-
-  document.getElementById("totalDrills").textContent = drills.length;
-  document.getElementById("favoriteCount").textContent = appState.favorites.length;
-  document.getElementById("customCount").textContent = appState.customDrills.length;
-  document.getElementById("practiceCount").textContent = appState.practice.length;
+function buildBlockFromLibrary(item, type) {
+  return {
+    id: makeId("block"),
+    type,
+    title: item.title,
+    category: item.category,
+    minutes: Number(item.minutes) || 5,
+    summary: item.summary || "",
+    details: item.details || [],
+    coaching: item.coaching || "",
+    evaluate: "",
+    notes: "",
+    sourceId: item.id
+  };
 }
 
-function renderDrillCard(drill) {
-  const star = isFavorite(drill.id) ? "★ Favorite" : "☆ Favorite";
+function addBlock(block) {
+  state.currentPractice.blocks.push(block);
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
 
-  return `
-    <div class="drill-card">
-      <div class="drill-top">
-        <div>
-          <h3>${escapeHtml(drill.number ? drill.number + " " : "")}${escapeHtml(drill.name)}</h3>
-          <div class="drill-meta">
-            <span class="badge category-badge">${escapeHtml(drill.category)}</span>
-            <span class="badge source-badge">${escapeHtml(drill.source || "Custom")}</span>
-            <span class="badge">${escapeHtml(drill.players)}</span>
-            <span class="badge">${escapeHtml(drill.time)} min</span>
-            <span class="badge">${escapeHtml(drill.level)}</span>
-          </div>
-        </div>
+function removeBlock(id) {
+  state.currentPractice.blocks = state.currentPractice.blocks.filter(block => block.id !== id);
+  saveState();
+  renderAll();
+}
 
-        <button class="star-btn ${isFavorite(drill.id) ? "active" : ""}" data-favorite="${escapeHtml(drill.id)}">${star}</button>
+function moveBlock(id, direction) {
+  const blocks = state.currentPractice.blocks;
+  const index = blocks.findIndex(block => block.id === id);
+  if (index < 0) return;
+
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= blocks.length) return;
+
+  [blocks[index], blocks[nextIndex]] = [blocks[nextIndex], blocks[index]];
+  saveState();
+  renderAll();
+}
+
+function duplicateBlock(id) {
+  const block = state.currentPractice.blocks.find(item => item.id === id);
+  if (!block) return;
+
+  const copy = {
+    ...JSON.parse(JSON.stringify(block)),
+    id: makeId("block"),
+    title: `${block.title} Copy`
+  };
+
+  state.currentPractice.blocks.push(copy);
+  saveState();
+  renderAll();
+}
+
+function updateBlockNotes(id, notes) {
+  const block = state.currentPractice.blocks.find(item => item.id === id);
+  if (!block) return;
+
+  block.notes = notes;
+  saveState();
+}
+
+function updatePracticeDetails() {
+  state.currentPractice.title = document.getElementById("practiceTitle").value;
+  state.currentPractice.date = document.getElementById("practiceDate").value;
+  state.currentPractice.team = document.getElementById("practiceTeam").value;
+  state.currentPractice.focus = document.getElementById("practiceFocus").value;
+  saveState();
+}
+
+function saveCurrentPractice() {
+  const practice = {
+    ...JSON.parse(JSON.stringify(state.currentPractice)),
+    id: state.currentPractice.id || makeId("practice"),
+    updatedAt: new Date().toISOString()
+  };
+
+  if (!practice.title.trim()) {
+    practice.title = "Untitled Practice";
+  }
+
+  const existingIndex = state.savedPractices.findIndex(item => item.id === practice.id);
+
+  if (existingIndex >= 0) {
+    state.savedPractices[existingIndex] = practice;
+  } else {
+    state.savedPractices.unshift(practice);
+  }
+
+  state.currentPractice = practice;
+  saveState();
+  renderAll();
+  alert("Practice saved.");
+}
+
+function loadPractice(id) {
+  const practice = state.savedPractices.find(item => item.id === id);
+  if (!practice) return;
+
+  state.currentPractice = JSON.parse(JSON.stringify(practice));
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
+
+function duplicatePractice(id) {
+  const practice = state.savedPractices.find(item => item.id === id);
+  if (!practice) return;
+
+  const copy = {
+    ...JSON.parse(JSON.stringify(practice)),
+    id: makeId("practice"),
+    title: `${practice.title || "Practice"} Copy`,
+    updatedAt: new Date().toISOString()
+  };
+
+  state.savedPractices.unshift(copy);
+  saveState();
+  renderAll();
+}
+
+function deletePractice(id) {
+  if (!confirm("Delete this saved practice?")) return;
+
+  state.savedPractices = state.savedPractices.filter(item => item.id !== id);
+  saveState();
+  renderAll();
+}
+
+function newPractice() {
+  if (!confirm("Start a new blank practice? Save this one first if you want to keep it.")) return;
+
+  state.currentPractice = {
+    id: makeId("practice"),
+    title: "",
+    date: today(),
+    team: "",
+    focus: "",
+    blocks: []
+  };
+
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
+
+function addPlayer() {
+  const input = document.getElementById("playerNameInput");
+  const name = input.value.trim();
+
+  if (!name) return;
+
+  state.roster.push({
+    id: makeId("player"),
+    name,
+    present: false
+  });
+
+  input.value = "";
+  saveState();
+  renderAll();
+}
+
+function togglePlayer(id) {
+  const player = state.roster.find(item => item.id === id);
+  if (!player) return;
+
+  player.present = !player.present;
+  saveState();
+  renderAll();
+}
+
+function deletePlayer(id) {
+  if (!confirm("Remove this player?")) return;
+
+  state.roster = state.roster.filter(item => item.id !== id);
+  saveState();
+  renderAll();
+}
+
+function openCustomModal() {
+  document.getElementById("customTitle").value = "";
+  document.getElementById("customMinutes").value = "";
+  document.getElementById("customNotes").value = "";
+  document.getElementById("customModal").classList.remove("hidden");
+}
+
+function closeCustomModal() {
+  document.getElementById("customModal").classList.add("hidden");
+}
+
+function saveCustomBlock() {
+  const title = document.getElementById("customTitle").value.trim();
+  const minutes = Number(document.getElementById("customMinutes").value) || 5;
+  const notes = document.getElementById("customNotes").value.trim();
+
+  if (!title) {
+    alert("Add a block title.");
+    return;
+  }
+
+  addBlock({
+    id: makeId("block"),
+    type: "custom",
+    title,
+    category: "Custom",
+    minutes,
+    summary: notes,
+    details: [],
+    coaching: "",
+    evaluate: "",
+    notes,
+    sourceId: ""
+  });
+
+  closeCustomModal();
+}
+
+function openDetails(item, type) {
+  let title = "";
+  let meta = "";
+  let summary = "";
+  let details = [];
+  let coaching = "";
+  let evaluate = "";
+
+  if (type === "drill") {
+    title = `${item.number ? item.number + " " : ""}${item.name}`;
+    meta = `${item.category} · ${item.players} · ${item.time} min · ${item.level} · ${item.skills}`;
+    summary = item.purpose || "";
+    details = Array.isArray(item.run) ? item.run : [];
+    coaching = item.coaching || "";
+    evaluate = item.evaluate || "";
+  } else {
+    title = item.title;
+    meta = `${item.category} · ${item.minutes} min`;
+    summary = item.summary || "";
+    details = item.details || [];
+    coaching = item.coaching || "";
+  }
+
+  const detailList = details.length
+    ? `<ol>${details.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`
+    : `<p>No steps added yet.</p>`;
+
+  document.getElementById("detailsContent").innerHTML = `
+    <h2 class="detail-title">${escapeHtml(title)}</h2>
+    <div class="detail-meta">${escapeHtml(meta)}</div>
+
+    <div class="detail-section">
+      <h3>Purpose</h3>
+      <p>${escapeHtml(summary)}</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>How to Run It</h3>
+      ${detailList}
+    </div>
+
+    ${coaching ? `
+      <div class="detail-section">
+        <h3>Coaching Points</h3>
+        <p>${escapeHtml(coaching)}</p>
       </div>
+    ` : ""}
 
-      <p class="drill-purpose">${escapeHtml(drill.purpose)}</p>
-
-      <div class="drill-actions">
-        <button class="btn small dark" data-open="${escapeHtml(drill.id)}">Open Drill</button>
-        <button class="btn small primary" data-add-practice="${escapeHtml(drill.id)}">Add to Practice</button>
-        ${drill.custom ? `<button class="btn small danger" data-delete-custom="${escapeHtml(drill.id)}">Delete</button>` : ""}
+    ${evaluate ? `
+      <div class="detail-section">
+        <h3>What to Evaluate</h3>
+        <p>${escapeHtml(evaluate)}</p>
       </div>
+    ` : ""}
+
+    <div class="bottom-actions">
+      <button class="btn dark" data-modal-add="${escapeHtml(item.id)}" data-modal-type="${type}">＋ Add to Practice</button>
     </div>
   `;
+
+  document.getElementById("detailsModal").classList.remove("hidden");
 }
 
-function renderDrills() {
-  const drills = getFilteredDrills();
-  const list = document.getElementById("drillList");
+function closeDetails() {
+  document.getElementById("detailsModal").classList.add("hidden");
+}
 
-  document.getElementById("drillResultCount").textContent = `${drills.length} drills`;
+function renderPlan() {
+  const practice = state.currentPractice;
 
-  if (drills.length === 0) {
-    list.innerHTML = `<p class="hint">No drills match your filters.</p>`;
+  document.getElementById("practiceTitle").value = practice.title || "";
+  document.getElementById("practiceDate").value = practice.date || today();
+  document.getElementById("practiceTeam").value = practice.team || "";
+  document.getElementById("practiceFocus").value = practice.focus || "";
+  document.getElementById("totalMinutes").textContent = `${totalMinutes()}m`;
+
+  const planList = document.getElementById("planList");
+  const emptyPlan = document.getElementById("emptyPlan");
+
+  if (practice.blocks.length === 0) {
+    planList.innerHTML = "";
+    emptyPlan.style.display = "block";
     return;
   }
 
-  list.innerHTML = drills.map(renderDrillCard).join("");
-}
+  emptyPlan.style.display = "none";
 
-function renderFavorites() {
-  const favorites = allDrills().filter(drill => isFavorite(drill.id));
-  const list = document.getElementById("favoriteList");
-
-  document.getElementById("favoriteResultCount").textContent = `${favorites.length} favorites`;
-
-  if (favorites.length === 0) {
-    list.innerHTML = `<p class="hint">No favorite drills yet. Star drills from the Drill Book tab.</p>`;
-    return;
-  }
-
-  list.innerHTML = favorites.map(renderDrillCard).join("");
-}
-
-function renderPractice() {
-  const list = document.getElementById("practiceList");
-
-  const totalMinutes = appState.practice.reduce((sum, item) => sum + (Number(item.minutes) || 0), 0);
-  document.getElementById("practiceMinutes").textContent = `${totalMinutes} minutes`;
-
-  document.getElementById("practiceName").value = appState.practiceDetails.name || "";
-  document.getElementById("practiceDate").value = appState.practiceDetails.date || "";
-  document.getElementById("practiceTeam").value = appState.practiceDetails.team || "";
-  document.getElementById("practiceFocus").value = appState.practiceDetails.focus || "";
-
-  if (appState.practice.length === 0) {
-    list.innerHTML = `<p class="hint">No drills added yet. Go to the Drill Book tab and tap Add to Practice.</p>`;
-    return;
-  }
-
-  list.innerHTML = appState.practice.map((item, index) => {
-    const drill = getDrillById(item.drillId);
-
-    if (!drill) return "";
+  planList.innerHTML = practice.blocks.map((block, index) => {
+    const typeClass = block.type === "mental" ? "mental" : block.type === "sc" ? "sc" : block.type === "custom" ? "custom" : "";
 
     return `
-      <div class="practice-item">
-        <div class="practice-item-top">
+      <div class="plan-block">
+        <div class="plan-block-top">
+          <div class="block-num ${typeClass}">${index + 1}</div>
+
           <div>
-            <h3>${index + 1}. ${escapeHtml(drill.name)}</h3>
-            <div class="drill-meta">
-              ${escapeHtml(drill.category)} • ${escapeHtml(drill.level)} • ${escapeHtml(drill.skills)}
+            <h3 class="block-title">${escapeHtml(block.title)}</h3>
+            <div class="block-meta">
+              ${escapeHtml(block.category || block.type)} · ${escapeHtml(block.minutes)} min
+              ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
             </div>
           </div>
 
-          <button class="btn small danger" data-remove-practice="${escapeHtml(item.id)}">Remove</button>
+          <div class="block-actions">
+            <button class="icon-btn" data-move-up="${escapeHtml(block.id)}">↑</button>
+            <button class="icon-btn" data-move-down="${escapeHtml(block.id)}">↓</button>
+            <button class="icon-btn" data-duplicate-block="${escapeHtml(block.id)}">⧉</button>
+            <button class="icon-btn danger" data-remove-block="${escapeHtml(block.id)}">×</button>
+          </div>
         </div>
 
-        <label>Minutes</label>
-        <input class="control" type="number" value="${escapeHtml(item.minutes)}" data-practice-minutes="${escapeHtml(item.id)}" />
+        <textarea class="block-notes" data-block-notes="${escapeHtml(block.id)}" placeholder="Coach notes for this block...">${escapeHtml(block.notes || "")}</textarea>
+      </div>
+    `;
+  }).join("");
+}
 
-        <label>Coach Notes</label>
-        <textarea class="practice-notes" data-practice-notes="${escapeHtml(item.id)}">${escapeHtml(item.notes)}</textarea>
+function renderCategories() {
+  const categoryChips = document.getElementById("categoryChips");
+  const categories = ["All", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
 
-        <div class="detail-section">
-          <h4>Purpose</h4>
+  categoryChips.innerHTML = categories.map(category => `
+    <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>
+  `).join("");
+}
+
+function filteredDrills() {
+  const q = drillSearch.toLowerCase().trim();
+
+  return DRILLS.filter(drill => {
+    const categoryMatch = activeCategory === "All" || drill.category === activeCategory;
+
+    const searchable = [
+      drill.number,
+      drill.category,
+      drill.name,
+      drill.players,
+      drill.time,
+      drill.level,
+      drill.skills,
+      drill.purpose,
+      drill.setup,
+      Array.isArray(drill.run) ? drill.run.join(" ") : "",
+      drill.coaching,
+      drill.evaluate
+    ].join(" ").toLowerCase();
+
+    const searchMatch = !q || searchable.includes(q);
+
+    return categoryMatch && searchMatch;
+  });
+}
+
+function renderDrills() {
+  renderCategories();
+
+  const list = document.getElementById("drillLibrary");
+  const drills = filteredDrills();
+
+  document.getElementById("drillCountBadge").textContent = `${drills.length} drills`;
+
+  if (drills.length === 0) {
+    list.innerHTML = `<div class="empty-card small"><p>No drills found.</p></div>`;
+    return;
+  }
+
+  let html = "";
+  let lastCategory = "";
+
+  drills.forEach(drill => {
+    if (drill.category !== lastCategory) {
+      lastCategory = drill.category;
+      html += `
+        <div class="category-title">
+          <span class="category-dot"></span>
+          ${escapeHtml(lastCategory)}
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="library-card">
+        <div>
+          <h3>${escapeHtml(drill.name)}</h3>
           <p>${escapeHtml(drill.purpose)}</p>
+          <div class="card-meta">
+            ${escapeHtml(drill.level)} · ${escapeHtml(drill.time)} min · ${escapeHtml(drill.players)} · ${escapeHtml(drill.skills)}
+            · <button class="card-link" data-open-drill="${escapeHtml(drill.id)}">Details</button>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="icon-btn" data-add-drill="${escapeHtml(drill.id)}">＋</button>
+          <button class="icon-btn" data-open-drill="${escapeHtml(drill.id)}">?</button>
+        </div>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+}
+
+function renderMental() {
+  const list = document.getElementById("mentalLibrary");
+
+  const blocks = MENTAL_BLOCKS.filter(item => {
+    return mentalFilter === "All" || item.category === mentalFilter;
+  });
+
+  list.innerHTML = blocks.map((item, index) => `
+    <div class="library-card">
+      <div>
+        <h3>${index + 1}. ${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.summary)}</p>
+        <div class="card-meta">
+          ${escapeHtml(item.minutes)} min session ·
+          <button class="card-link" data-open-mental="${escapeHtml(item.id)}">Open session</button>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="icon-btn" data-add-mental="${escapeHtml(item.id)}">＋</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderSC() {
+  const list = document.getElementById("scLibrary");
+
+  list.innerHTML = SC_BLOCKS.map((item, index) => `
+    <div class="library-card">
+      <div>
+        <h3>${index + 1}. ${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.summary)}</p>
+        <div class="card-meta">
+          ${escapeHtml(item.category)} · ${escapeHtml(item.minutes)} min
+          · <button class="card-link" data-open-sc="${escapeHtml(item.id)}">Open drills</button>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="icon-btn" data-add-sc="${escapeHtml(item.id)}">＋</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderRoster() {
+  const list = document.getElementById("rosterList");
+  const empty = document.getElementById("emptyRoster");
+
+  if (state.roster.length === 0) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+
+  empty.style.display = "none";
+
+  list.innerHTML = state.roster.map(player => `
+    <div class="roster-card ${player.present ? "present" : ""}">
+      <div data-toggle-player="${escapeHtml(player.id)}">
+        <div class="roster-name">${escapeHtml(player.name)}</div>
+        <div class="roster-status">${player.present ? "Present" : "Tap to mark present"}</div>
+      </div>
+
+      <button class="icon-btn danger" data-delete-player="${escapeHtml(player.id)}">×</button>
+    </div>
+  `).join("");
+}
+
+function renderSaved() {
+  const list = document.getElementById("savedList");
+  const empty = document.getElementById("emptySaved");
+
+  if (state.savedPractices.length === 0) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+
+  empty.style.display = "none";
+
+  list.innerHTML = state.savedPractices.map(practice => {
+    const minutes = (practice.blocks || []).reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+
+    return `
+      <div class="saved-card">
+        <h3>${escapeHtml(practice.title || "Untitled Practice")}</h3>
+        <p>${escapeHtml(formatDate(practice.date))} · ${minutes} min · ${(practice.blocks || []).length} blocks</p>
+
+        <div class="saved-actions">
+          <button class="btn dark" data-load-practice="${escapeHtml(practice.id)}">Load</button>
+          <button class="btn light" data-dupe-practice="${escapeHtml(practice.id)}">Duplicate</button>
+          <button class="btn danger" data-delete-practice="${escapeHtml(practice.id)}">Delete</button>
         </div>
       </div>
     `;
   }).join("");
 }
 
-function renderSettings() {
-  document.getElementById("programName").value = appState.settings.programName || "";
-  document.getElementById("coachName").value = appState.settings.coachName || "";
+function backupData() {
+  const backup = JSON.stringify(state, null, 2);
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(backup).then(() => {
+      alert("Backup copied to clipboard.");
+    }).catch(() => {
+      prompt("Copy this backup text:", backup);
+    });
+  } else {
+    prompt("Copy this backup text:", backup);
+  }
 }
 
-function openDrillModal(id) {
-  const drill = getDrillById(id);
+function restoreData() {
+  const raw = document.getElementById("restoreText").value.trim();
 
-  if (!drill) return;
-
-  const runSteps = Array.isArray(drill.run)
-    ? drill.run.map(step => `<li>${escapeHtml(step)}</li>`).join("")
-    : `<li>${escapeHtml(drill.run)}</li>`;
-
-  document.getElementById("modalContent").innerHTML = `
-    <div class="modal-content">
-      <h2>${escapeHtml(drill.number ? drill.number + " " : "")}${escapeHtml(drill.name)}</h2>
-
-      <div class="detail-grid">
-        <div class="detail-box"><strong>Category</strong>${escapeHtml(drill.category)}</div>
-        <div class="detail-box"><strong>Source</strong>${escapeHtml(drill.source || "Custom")}</div>
-        <div class="detail-box"><strong>Players</strong>${escapeHtml(drill.players)}</div>
-        <div class="detail-box"><strong>Time</strong>${escapeHtml(drill.time)} min</div>
-        <div class="detail-box"><strong>Level</strong>${escapeHtml(drill.level)}</div>
-        <div class="detail-box"><strong>Skills</strong>${escapeHtml(drill.skills)}</div>
-      </div>
-
-      <div class="detail-section">
-        <h3>Purpose</h3>
-        <p>${renderTextBlock(drill.purpose)}</p>
-      </div>
-
-      <div class="detail-section">
-        <h3>Setup</h3>
-        <p>${renderTextBlock(drill.setup)}</p>
-      </div>
-
-      <div class="detail-section">
-        <h3>How To Run It</h3>
-        <ol>${runSteps}</ol>
-      </div>
-
-      <div class="detail-section">
-        <h3>Coaching Points</h3>
-        <p>${renderTextBlock(drill.coaching)}</p>
-      </div>
-
-      <div class="detail-section">
-        <h3>What To Evaluate</h3>
-        <p>${renderTextBlock(drill.evaluate)}</p>
-      </div>
-
-      <div class="drill-actions">
-        <button class="btn primary" data-add-practice="${escapeHtml(drill.id)}">Add to Practice</button>
-        <button class="btn light" data-favorite="${escapeHtml(drill.id)}">${isFavorite(drill.id) ? "★ Remove Favorite" : "☆ Add Favorite"}</button>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("drillModal").classList.remove("hidden");
-}
-
-function closeModal() {
-  document.getElementById("drillModal").classList.add("hidden");
-}
-
-function saveCustomDrill() {
-  const name = document.getElementById("customName").value.trim();
-
-  if (!name) {
-    alert("Add a drill name.");
+  if (!raw) {
+    alert("Paste backup text first.");
     return;
   }
 
-  const drill = {
-    id: makeId("custom"),
-    number: "",
-    category: document.getElementById("customCategory").value,
-    name,
-    source: "Custom",
-    players: document.getElementById("customPlayers").value.trim() || "Any",
-    time: Number(document.getElementById("customTime").value) || 10,
-    level: document.getElementById("customLevel").value,
-    skills: document.getElementById("customSkills").value.trim() || "Volleyball",
-    purpose: document.getElementById("customPurpose").value.trim(),
-    setup: document.getElementById("customSetup").value.trim(),
-    run: document.getElementById("customRun").value.trim().split("\n").filter(Boolean),
-    coaching: document.getElementById("customCoaching").value.trim(),
-    evaluate: document.getElementById("customEvaluate").value.trim(),
-    custom: true
-  };
+  try {
+    const parsed = JSON.parse(raw);
 
-  appState.customDrills.push(drill);
-  saveState();
-
-  document.querySelectorAll("#add input, #add textarea").forEach(input => {
-    input.value = "";
-  });
-
-  renderAll();
-  switchTab("drills");
-}
-
-function deleteCustomDrill(id) {
-  if (!confirm("Delete this custom drill?")) return;
-
-  appState.customDrills = appState.customDrills.filter(drill => drill.id !== id);
-  appState.favorites = appState.favorites.filter(item => item !== id);
-  appState.practice = appState.practice.filter(item => item.drillId !== id);
-
-  saveState();
-  renderAll();
-}
-
-function clearPractice() {
-  if (!confirm("Clear the current practice plan?")) return;
-
-  appState.practice = [];
-  saveState();
-  renderAll();
-}
-
-function saveSettings() {
-  appState.settings.programName = document.getElementById("programName").value.trim();
-  appState.settings.coachName = document.getElementById("coachName").value.trim();
-
-  saveState();
-  renderAll();
-  alert("Settings saved.");
-}
-
-function resetLocalData() {
-  if (!confirm("Reset all local website data?")) return;
-
-  localStorage.removeItem(STORAGE_KEY);
-
-  appState = {
-    favorites: [],
-    customDrills: [],
-    practice: [],
-    settings: {
-      programName: "Rising Sun Volleyball",
-      coachName: "Coach"
-    },
-    practiceDetails: {
-      name: "",
-      date: "",
-      team: "",
-      focus: ""
+    if (!parsed.currentPractice || !Array.isArray(parsed.savedPractices)) {
+      alert("That does not look like a valid backup.");
+      return;
     }
-  };
 
-  renderAll();
-  switchTab("home");
-}
-
-function backupData() {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    appState
-  };
-
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json"
-  });
-
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "volleyball-drill-book-backup.json";
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
-function importData(file) {
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function () {
-    try {
-      const data = JSON.parse(reader.result);
-
-      if (data.appState) {
-        appState = data.appState;
-        saveState();
-        renderAll();
-        alert("Backup imported.");
-      } else {
-        alert("Invalid backup file.");
-      }
-    } catch {
-      alert("Could not import this file.");
-    }
-  };
-
-  reader.readAsText(file);
+    state = parsed;
+    saveState();
+    renderAll();
+    alert("Backup restored.");
+  } catch {
+    alert("Could not read that backup text.");
+  }
 }
 
 function renderAll() {
-  renderFilters();
-  renderHome();
+  renderPlan();
   renderDrills();
-  renderFavorites();
-  renderPractice();
-  renderSettings();
+  renderMental();
+  renderSC();
+  renderRoster();
+  renderSaved();
 }
 
 document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    switchTab(tab.dataset.tab);
-  });
+  tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
 
 document.querySelectorAll("[data-jump]").forEach(button => {
-  button.addEventListener("click", () => {
-    switchTab(button.dataset.jump);
-  });
+  button.addEventListener("click", () => switchTab(button.dataset.jump));
 });
 
-document.getElementById("searchInput").addEventListener("input", event => {
-  searchText = event.target.value;
+["practiceTitle", "practiceDate", "practiceTeam", "practiceFocus"].forEach(id => {
+  document.getElementById(id).addEventListener("input", updatePracticeDetails);
+});
+
+document.getElementById("drillSearch").addEventListener("input", event => {
+  drillSearch = event.target.value;
   renderDrills();
 });
 
-document.getElementById("categoryFilter").addEventListener("change", event => {
-  categoryFilter = event.target.value;
-  renderDrills();
+document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+document.getElementById("playerNameInput").addEventListener("keydown", event => {
+  if (event.key === "Enter") addPlayer();
 });
 
-document.getElementById("levelFilter").addEventListener("change", event => {
-  levelFilter = event.target.value;
-  renderDrills();
+document.getElementById("addCustomBlockBtn").addEventListener("click", openCustomModal);
+document.getElementById("closeCustomBtn").addEventListener("click", closeCustomModal);
+document.getElementById("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
+
+document.getElementById("closeDetailsBtn").addEventListener("click", closeDetails);
+document.getElementById("detailsModal").addEventListener("click", event => {
+  if (event.target.id === "detailsModal") closeDetails();
 });
 
-document.getElementById("timeFilter").addEventListener("change", event => {
-  timeFilter = event.target.value;
-  renderDrills();
+document.getElementById("customModal").addEventListener("click", event => {
+  if (event.target.id === "customModal") closeCustomModal();
 });
 
-document.getElementById("clearFiltersBtn").addEventListener("click", () => {
-  searchText = "";
-  categoryFilter = "All";
-  levelFilter = "All";
-  timeFilter = "all";
-  document.getElementById("searchInput").value = "";
-  renderAll();
-});
+document.getElementById("savePracticeBtn").addEventListener("click", saveCurrentPractice);
+document.getElementById("printPracticeBtn").addEventListener("click", () => window.print());
 
-document.getElementById("saveCustomDrillBtn").addEventListener("click", saveCustomDrill);
-document.getElementById("clearPracticeBtn").addEventListener("click", clearPractice);
-document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
-document.getElementById("resetBtn").addEventListener("click", resetLocalData);
 document.getElementById("backupBtn").addEventListener("click", backupData);
-document.getElementById("importInput").addEventListener("change", event => importData(event.target.files[0]));
-document.getElementById("printBtn").addEventListener("click", () => window.print());
-
-document.getElementById("practiceName").addEventListener("input", event => {
-  appState.practiceDetails.name = event.target.value;
-  saveState();
-});
-
-document.getElementById("practiceDate").addEventListener("input", event => {
-  appState.practiceDetails.date = event.target.value;
-  saveState();
-});
-
-document.getElementById("practiceTeam").addEventListener("input", event => {
-  appState.practiceDetails.team = event.target.value;
-  saveState();
-});
-
-document.getElementById("practiceFocus").addEventListener("input", event => {
-  appState.practiceDetails.focus = event.target.value;
-  saveState();
-});
-
-document.getElementById("closeModalBtn").addEventListener("click", closeModal);
-document.getElementById("drillModal").addEventListener("click", event => {
-  if (event.target.id === "drillModal") {
-    closeModal();
-  }
-});
+document.getElementById("restoreBtn").addEventListener("click", restoreData);
 
 document.addEventListener("click", event => {
-  const openButton = event.target.closest("[data-open]");
-  const favoriteButton = event.target.closest("[data-favorite]");
-  const addPracticeButton = event.target.closest("[data-add-practice]");
-  const deleteCustomButton = event.target.closest("[data-delete-custom]");
-  const removePracticeButton = event.target.closest("[data-remove-practice]");
+  const categoryBtn = event.target.closest("[data-category]");
+  const mentalBtn = event.target.closest("[data-mental-filter]");
+  const addDrillBtn = event.target.closest("[data-add-drill]");
+  const openDrillBtn = event.target.closest("[data-open-drill]");
+  const addMentalBtn = event.target.closest("[data-add-mental]");
+  const openMentalBtn = event.target.closest("[data-open-mental]");
+  const addSCBtn = event.target.closest("[data-add-sc]");
+  const openSCBtn = event.target.closest("[data-open-sc]");
+  const removeBlockBtn = event.target.closest("[data-remove-block]");
+  const duplicateBlockBtn = event.target.closest("[data-duplicate-block]");
+  const moveUpBtn = event.target.closest("[data-move-up]");
+  const moveDownBtn = event.target.closest("[data-move-down]");
+  const togglePlayerBtn = event.target.closest("[data-toggle-player]");
+  const deletePlayerBtn = event.target.closest("[data-delete-player]");
+  const loadPracticeBtn = event.target.closest("[data-load-practice]");
+  const dupePracticeBtn = event.target.closest("[data-dupe-practice]");
+  const deletePracticeBtn = event.target.closest("[data-delete-practice]");
+  const modalAddBtn = event.target.closest("[data-modal-add]");
 
-  if (openButton) {
-    openDrillModal(openButton.dataset.open);
+  if (categoryBtn) {
+    activeCategory = categoryBtn.dataset.category;
+    renderDrills();
   }
 
-  if (favoriteButton) {
-    toggleFavorite(favoriteButton.dataset.favorite);
+  if (mentalBtn) {
+    mentalFilter = mentalBtn.dataset.mentalFilter;
+    document.querySelectorAll("[data-mental-filter]").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.mentalFilter === mentalFilter);
+    });
+    renderMental();
   }
 
-  if (addPracticeButton) {
-    addToPractice(addPracticeButton.dataset.addPractice);
+  if (addDrillBtn) {
+    const drill = DRILLS.find(item => item.id === addDrillBtn.dataset.addDrill);
+    if (drill) addBlock(buildBlockFromDrill(drill));
   }
 
-  if (deleteCustomButton) {
-    deleteCustomDrill(deleteCustomButton.dataset.deleteCustom);
+  if (openDrillBtn) {
+    const drill = DRILLS.find(item => item.id === openDrillBtn.dataset.openDrill);
+    if (drill) openDetails(drill, "drill");
   }
 
-  if (removePracticeButton) {
-    removeFromPractice(removePracticeButton.dataset.removePractice);
+  if (addMentalBtn) {
+    const item = MENTAL_BLOCKS.find(block => block.id === addMentalBtn.dataset.addMental);
+    if (item) addBlock(buildBlockFromLibrary(item, "mental"));
+  }
+
+  if (openMentalBtn) {
+    const item = MENTAL_BLOCKS.find(block => block.id === openMentalBtn.dataset.openMental);
+    if (item) openDetails(item, "mental");
+  }
+
+  if (addSCBtn) {
+    const item = SC_BLOCKS.find(block => block.id === addSCBtn.dataset.addSc);
+    if (item) addBlock(buildBlockFromLibrary(item, "sc"));
+  }
+
+  if (openSCBtn) {
+    const item = SC_BLOCKS.find(block => block.id === openSCBtn.dataset.openSc);
+    if (item) openDetails(item, "sc");
+  }
+
+  if (removeBlockBtn) {
+    removeBlock(removeBlockBtn.dataset.removeBlock);
+  }
+
+  if (duplicateBlockBtn) {
+    duplicateBlock(duplicateBlockBtn.dataset.duplicateBlock);
+  }
+
+  if (moveUpBtn) {
+    moveBlock(moveUpBtn.dataset.moveUp, -1);
+  }
+
+  if (moveDownBtn) {
+    moveBlock(moveDownBtn.dataset.moveDown, 1);
+  }
+
+  if (togglePlayerBtn) {
+    togglePlayer(togglePlayerBtn.dataset.togglePlayer);
+  }
+
+  if (deletePlayerBtn) {
+    deletePlayer(deletePlayerBtn.dataset.deletePlayer);
+  }
+
+  if (loadPracticeBtn) {
+    loadPractice(loadPracticeBtn.dataset.loadPractice);
+  }
+
+  if (dupePracticeBtn) {
+    duplicatePractice(dupePracticeBtn.dataset.dupePractice);
+  }
+
+  if (deletePracticeBtn) {
+    deletePractice(deletePracticeBtn.dataset.deletePractice);
+  }
+
+  if (modalAddBtn) {
+    const type = modalAddBtn.dataset.modalType;
+    const id = modalAddBtn.dataset.modalAdd;
+
+    if (type === "drill") {
+      const drill = DRILLS.find(item => item.id === id);
+      if (drill) addBlock(buildBlockFromDrill(drill));
+    }
+
+    if (type === "mental") {
+      const item = MENTAL_BLOCKS.find(block => block.id === id);
+      if (item) addBlock(buildBlockFromLibrary(item, "mental"));
+    }
+
+    if (type === "sc") {
+      const item = SC_BLOCKS.find(block => block.id === id);
+      if (item) addBlock(buildBlockFromLibrary(item, "sc"));
+    }
+
+    closeDetails();
   }
 });
 
 document.addEventListener("input", event => {
-  const minutesInput = event.target.closest("[data-practice-minutes]");
-  const notesInput = event.target.closest("[data-practice-notes]");
-
-  if (minutesInput) {
-    updatePracticeItem(minutesInput.dataset.practiceMinutes, "minutes", minutesInput.value);
-  }
-
+  const notesInput = event.target.closest("[data-block-notes]");
   if (notesInput) {
-    updatePracticeItem(notesInput.dataset.practiceNotes, "notes", notesInput.value);
+    updateBlockNotes(notesInput.dataset.blockNotes, notesInput.value);
   }
 });
 
 loadState();
+switchTab(state.activeTab || "plan");
 renderAll();
