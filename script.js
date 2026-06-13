@@ -1310,110 +1310,22 @@ function printPracticePlan() {
   window.print();
 }
 
-function createBackupText() {
-  return JSON.stringify({
-    app: "Volleyball Practice Planner",
-    version: "V5",
-    exportedAt: new Date().toISOString(),
-    data: state
-  }, null, 2);
-}
-
 function backupData() {
-  const text = createBackupText();
-  const box = $("restoreText");
-
-  if (box) {
-    box.value = text;
-    box.focus();
-    box.select();
-  }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Backup code created and copied. Save it in Notes, text it to yourself, or paste it on the other device.");
-    }).catch(() => {
-      alert("Backup code created. Copy the text box and save it somewhere safe.");
-    });
-  } else {
-    alert("Backup code created. Copy the text box and save it somewhere safe.");
-  }
-}
-
-function copyBackupData() {
-  const box = $("restoreText");
-  let text = box && box.value.trim() ? box.value.trim() : createBackupText();
-
-  if (box && !box.value.trim()) {
-    box.value = text;
-  }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Backup code copied.");
-    }).catch(() => {
-      if (box) {
-        box.focus();
-        box.select();
-      }
-      alert("Select the backup code and copy it manually.");
-    });
-  } else {
-    if (box) {
-      box.focus();
-      box.select();
-    }
-    alert("Select the backup code and copy it manually.");
-  }
-}
-
-async function shareBackupData() {
-  const box = $("restoreText");
-  const text = box && box.value.trim() ? box.value.trim() : createBackupText();
-
-  if (box && !box.value.trim()) {
-    box.value = text;
-  }
-
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: "Volleyball Practice Planner Backup",
-        text
-      });
-    } catch {
-      // User cancelled share sheet. No problem.
-    }
-  } else {
-    copyBackupData();
-  }
+  prompt("Copy this backup:", JSON.stringify(state, null, 2));
 }
 
 function restoreData() {
   const raw = $("restoreText").value.trim();
-
-  if (!raw) {
-    alert("Paste a backup code first.");
-    return;
-  }
-
-  const confirmed = confirm("Restore this backup? This will replace the teams, rosters, and saved practices on this device.");
-
-  if (!confirmed) return;
+  if (!raw) return;
 
   try {
-    const parsed = JSON.parse(raw);
-    const restoredData = parsed && parsed.data ? parsed.data : parsed;
-
-    state = normalizeState(restoredData);
-
+    state = normalizeState(JSON.parse(raw));
     saveState();
     renderAll();
-    switchTab(state.activeTab || "plan");
 
-    alert("Backup restored. Teams, rosters, and saved practices are now loaded on this device.");
+    alert("Backup restored.");
   } catch {
-    alert("Could not restore backup. Make sure the full backup code was pasted.");
+    alert("Could not restore backup.");
   }
 }
 
@@ -1572,17 +1484,12 @@ function bindEvents() {
     const deleteSaved = event.target.closest("[data-delete-practice]");
     if (deleteSaved) return deletePractice(deleteSaved.dataset.deletePractice);
 
- const backupBtn = event.target.closest("#backupBtn");
-if (backupBtn) return backupData();
+    const backupBtn = event.target.closest("#backupBtn");
+    if (backupBtn) return backupData();
 
-const copyBackupBtn = event.target.closest("#copyBackupBtn");
-if (copyBackupBtn) return copyBackupData();
-
-const shareBackupBtn = event.target.closest("#shareBackupBtn");
-if (shareBackupBtn) return shareBackupData();
-
-const restoreBtn = event.target.closest("#restoreBtn");
-if (restoreBtn) return restoreData();
+    const restoreBtn = event.target.closest("#restoreBtn");
+    if (restoreBtn) return restoreData();
+  });
 
   document.addEventListener("change", event => {
     if (event.target.matches("#teamSelect")) {
