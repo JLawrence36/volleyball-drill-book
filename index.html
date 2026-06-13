@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volleyball Drill Book</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app">
+
+    <header class="top-header">
+      <div class="accent-bar"></div>
+
+      <div class="header-inner">
+        <div>
+          <div class="eyebrow">Volleyball Coach Tool</div>
+          <h1>Drill Book</h1>
+          <p>A searchable courtside library for drills, favorites, and practice planning.</p>
+        </div>
+
+        <div class="header-actions">
+          <button id="printBtn" class="btn primary">Print / Save PDF</button>
+          <button id="backupBtn" class="btn dark">Backup</button>
+          <label class="btn light">
+            Import
+            <input id="importInput" type="file" accept=".json,application/json" hidden />
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="home">Home</button>
+      <button class="tab" data-tab="drills">Drill Book</button>
+      <button class="tab" data-tab="add">Add Drill</button>
+      <button class="tab" data-tab="planner">Practice Planner</button>
+      <button class="tab" data-tab="favorites">Favorites</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <main>
+
+      <!-- HOME -->
+      <section id="home" class="screen active">
+        <div class="hero">
+          <h2>Build practices faster.</h2>
+          <p>
+            Search drills, save favorites, add custom drills, and build printable practice plans.
+          </p>
+
+          <div class="quick-actions">
+            <button class="btn primary" data-jump="drills">Open Drill Book</button>
+            <button class="btn dark" data-jump="planner">Build Practice</button>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <span id="totalDrills">0</span>
+            <p>Total Drills</p>
+          </div>
+
+          <div class="metric">
+            <span id="favoriteCount">0</span>
+            <p>Favorites</p>
+          </div>
+
+          <div class="metric">
+            <span id="customCount">0</span>
+            <p>Custom Drills</p>
+          </div>
+
+          <div class="metric">
+            <span id="practiceCount">0</span>
+            <p>Practice Blocks</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>What this site does</h3>
+          <ol class="steps">
+            <li>Search the drill library by skill, category, level, or keyword.</li>
+            <li>Open a drill card to see setup, instructions, coaching points, and evaluation criteria.</li>
+            <li>Star drills your wife uses often.</li>
+            <li>Add her own custom drills.</li>
+            <li>Build a printable practice plan from selected drills.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- DRILL BOOK -->
+      <section id="drills" class="screen">
+        <div class="tool-grid">
+          <aside class="panel">
+            <div class="panel-head">
+              <h2>Filters</h2>
+            </div>
+
+            <div class="panel-body">
+              <label>Search</label>
+              <input id="searchInput" class="control" type="text" placeholder="serve, defense, setter, beginner..." />
+
+              <label>Category</label>
+              <select id="categoryFilter" class="control"></select>
+
+              <label>Level</label>
+              <select id="levelFilter" class="control"></select>
+
+              <label>Time</label>
+              <select id="timeFilter" class="control">
+                <option value="all">Any time</option>
+                <option value="10">10 min or less</option>
+                <option value="15">15 min or less</option>
+                <option value="20">20 min or less</option>
+                <option value="25">25 min or less</option>
+              </select>
+
+              <button id="clearFiltersBtn" class="btn light full">Clear Filters</button>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panel-head between">
+              <h2>Drill Library</h2>
+              <span id="drillResultCount" class="hint">0 drills</span>
+            </div>
+
+            <div id="drillList" class="drill-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ADD DRILL -->
+      <section id="add" class="screen">
+        <div class="card">
+          <h2>Add Custom Drill</h2>
+          <p class="hint">
+            Custom drills save in this browser on this device.
+          </p>
+
+          <div class="form-grid">
+            <div>
+              <label>Drill Name</label>
+              <input id="customName" class="control" type="text" placeholder="Example: Serve Receive Chaos" />
+            </div>
+
+            <div>
+              <label>Category</label>
+              <select id="customCategory" class="control"></select>
+            </div>
+
+            <div>
+              <label>Players</label>
+              <input id="customPlayers" class="control" type="text" placeholder="6-12" />
+            </div>
+
+            <div>
+              <label>Time</label>
+              <input id="customTime" class="control" type="number" placeholder="15" />
+            </div>
+
+            <div>
+              <label>Level</label>
+              <select id="customLevel" class="control">
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+                <option>All levels</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Skills</label>
+              <input id="customSkills" class="control" type="text" placeholder="Passing, Communication" />
+            </div>
+          </div>
+
+          <label>Purpose</label>
+          <textarea id="customPurpose" class="control tall" placeholder="What is the goal of this drill?"></textarea>
+
+          <label>Setup</label>
+          <textarea id="customSetup" class="control tall" placeholder="Court setup, players, balls, cones, targets..."></textarea>
+
+          <label>How To Run It</label>
+          <textarea id="customRun" class="control tall" placeholder="Step-by-step instructions"></textarea>
+
+          <label>Coaching Points</label>
+          <textarea id="customCoaching" class="control tall" placeholder="Key cues and teaching points"></textarea>
+
+          <label>What To Evaluate</label>
+          <textarea id="customEvaluate" class="control tall" placeholder="What should the coach look for?"></textarea>
+
+          <button id="saveCustomDrillBtn" class="btn primary">Save Custom Drill</button>
+        </div>
+      </section>
+
+      <!-- PRACTICE PLANNER -->
+      <section id="planner" class="screen">
+        <div class="tool-grid">
+          <aside class="panel">
+            <div class="panel-head">
+              <h2>Practice Details</h2>
+            </div>
+
+            <div class="panel-body">
+              <label>Practice Name</label>
+              <input id="practiceName" class="control" type="text" placeholder="Serve Receive Practice" />
+
+              <label>Date</label>
+              <input id="practiceDate" class="control" type="date" />
+
+              <label>Team / Group</label>
+              <input id="practiceTeam" class="control" type="text" placeholder="Varsity / JV / Tryouts" />
+
+              <label>Focus</label>
+              <input id="practiceFocus" class="control" type="text" placeholder="Passing, sideout, defense..." />
+
+              <button id="clearPracticeBtn" class="btn danger full">Clear Practice Plan</button>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panel-head between">
+              <h2>Practice Plan</h2>
+              <span id="practiceMinutes" class="hint">0 minutes</span>
+            </div>
+
+            <div id="practiceList" class="practice-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- FAVORITES -->
+      <section id="favorites" class="screen">
+        <div class="panel">
+          <div class="panel-head between">
+            <h2>Favorite Drills</h2>
+            <span id="favoriteResultCount" class="hint">0 favorites</span>
+          </div>
+
+          <div id="favoriteList" class="drill-list"></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="screen">
+        <div class="card">
+          <h2>Settings</h2>
+
+          <label>Program Name</label>
+          <input id="programName" class="control" type="text" placeholder="Rising Sun Volleyball" />
+
+          <label>Coach Name</label>
+          <input id="coachName" class="control" type="text" placeholder="Coach Moe" />
+
+          <button id="saveSettingsBtn" class="btn primary">Save Settings</button>
+        </div>
+
+        <div class="card danger-card">
+          <h2>Reset Website Data</h2>
+          <p>
+            This clears favorites, custom drills, settings, and practice plans from this browser.
+            The built-in drill book will remain.
+          </p>
+
+          <button id="resetBtn" class="btn danger">Reset Local Data</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- DRILL MODAL -->
+  <div id="drillModal" class="modal hidden">
+    <div class="modal-box">
+      <button id="closeModalBtn" class="modal-close">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
