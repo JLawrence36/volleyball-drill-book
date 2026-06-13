@@ -11,8 +11,6 @@
   <div class="app-shell">
 
     <header class="app-header">
-      <div class="header-pattern"></div>
-
       <div class="brand-row">
         <div class="brand-icon">🏐</div>
         <div>
@@ -77,29 +75,31 @@
         <div id="emptyPlan" class="empty-card">
           <div class="empty-icon">🏐</div>
           <h2>No blocks yet</h2>
-          <p>Add drills from the library, mental blocks, S&C blocks, or drop in a custom block to start shaping your session.</p>
+          <p>Add drills from the library, mental blocks, S&C blocks, or a custom block to start building practice.</p>
 
           <div class="empty-actions">
+            <button class="btn gold" id="openTemplatesBtn">⚡ Templates</button>
             <button class="btn dark" data-jump="drills">▥ Open drill library</button>
             <button class="btn light" id="addCustomBlockBtn">＋ Custom block</button>
           </div>
         </div>
 
-    <div class="bottom-actions">
-  <button class="btn gold" id="openTemplatesBtn">⚡ Templates</button>
-  <button class="btn dark" data-jump="drills">Add Drill</button>
-  <button class="btn light" data-jump="mental">Add Mental</button>
-  <button class="btn light" data-jump="sc">Add S&C</button>
-  <button class="btn gold" id="savePracticeBtn">Save Practice</button>
-  <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
-</div>
+        <div class="bottom-actions">
+          <button class="btn gold" id="openTemplatesBtn">⚡ Templates</button>
+          <button class="btn dark" data-jump="drills">Add Drill</button>
+          <button class="btn light" data-jump="mental">Add Mental</button>
+          <button class="btn light" data-jump="sc">Add S&C</button>
+          <button class="btn gold" id="savePracticeBtn">Save Practice</button>
+          <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
+        </div>
+      </section>
 
       <!-- DRILLS -->
       <section id="drills" class="screen">
         <div class="section-head">
           <div>
             <h2>Drill Library</h2>
-            <p>Use the 80-drill library to build today’s practice.</p>
+            <p>Browse the drill library by category, favorite drills, or search by skill.</p>
           </div>
           <span id="drillCountBadge" class="count-badge">0 drills</span>
         </div>
@@ -144,15 +144,18 @@
 
         <div class="info-card">
           <h3>Simple session flow</h3>
+
           <div class="flow-row">
             <div>
               <strong>Warm-up · 8–10 min</strong>
               <p>Jog, high knees, butt kicks, leg swings, arm circles, walking lunges, ankle hops.</p>
             </div>
+
             <div>
               <strong>Work · 30–45 min</strong>
               <p>Pick agility, speed, vertical, strength, or shoulder-care blocks.</p>
             </div>
+
             <div>
               <strong>Cool-down · 5–7 min</strong>
               <p>Light stretching. Hold hamstrings, quads, calves, shoulders, and hip flexors.</p>
@@ -214,6 +217,18 @@
     </main>
   </div>
 
+  <!-- TEMPLATE MODAL -->
+  <div id="templateModal" class="modal hidden">
+    <div class="modal-panel">
+      <button id="closeTemplateBtn" class="modal-close">×</button>
+
+      <h2 class="detail-title">Practice Templates</h2>
+      <p class="detail-meta">Tap a template to instantly build a practice plan. You can edit minutes, move blocks, or delete anything after it loads.</p>
+
+      <div id="templateList" class="template-list"></div>
+    </div>
+  </div>
+
   <!-- DETAILS MODAL -->
   <div id="detailsModal" class="modal hidden">
     <div class="modal-panel">
@@ -221,17 +236,7 @@
       <div id="detailsContent"></div>
     </div>
   </div>
-<!-- TEMPLATE MODAL -->
-<div id="templateModal" class="modal hidden">
-  <div class="modal-panel">
-    <button id="closeTemplateBtn" class="modal-close">×</button>
 
-    <h2 class="detail-title">Practice Templates</h2>
-    <p class="detail-meta">Tap a template to instantly build a practice plan. You can still edit minutes, move blocks, or delete anything after it loads.</p>
-
-    <div id="templateList" class="template-list"></div>
-  </div>
-</div>
   <!-- CUSTOM BLOCK MODAL -->
   <div id="customModal" class="modal hidden">
     <div class="modal-panel">
