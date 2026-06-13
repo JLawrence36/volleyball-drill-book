@@ -1405,6 +1405,14 @@ document.getElementById("backupBtn").addEventListener("click", backupData);
 document.getElementById("restoreBtn").addEventListener("click", restoreData);
 
 document.addEventListener("click", event => {
+    const favoriteClick = event.target.closest("[data-toggle-favorite]");
+
+  if (favoriteClick) {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleFavoriteDrill(favoriteClick.dataset.toggleFavorite);
+    return;
+  }
   const categoryBtn = event.target.closest("[data-category]");
 const mentalBtn = event.target.closest("[data-mental-filter]");
 const toggleFavoriteBtn = event.target.closest("[data-toggle-favorite]");
