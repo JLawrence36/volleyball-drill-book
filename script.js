@@ -619,10 +619,21 @@ function renderPlan() {
 
           <div>
             <h3 class="block-title">${escapeHtml(block.title)}</h3>
-            <div class="block-meta">
-              ${escapeHtml(block.category || block.type)} · ${escapeHtml(block.minutes)} min
-              ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
-            </div>
+   <div class="block-meta">
+  ${escapeHtml(block.category || block.type)}
+  ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
+</div>
+
+<div class="block-time-edit">
+  <span>Minutes</span>
+  <input 
+    type="number" 
+    min="1" 
+    max="180" 
+    value="${escapeHtml(block.minutes || 0)}" 
+    data-block-minutes="${escapeHtml(block.id)}"
+  />
+</div>
           </div>
 
           <div class="block-actions">
