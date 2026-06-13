@@ -1001,3 +1001,15 @@ label {
     grid-template-columns: 1fr;
   }
 }
+.favorite-btn {
+  background: #fff7df;
+  color: #b7791f;
+  border: 1px solid #f4d58d;
+}
+
+.favorite-btn.active {
+  background: #f4aa32;
+  color: #111;
+  border-color: #f4aa32;
+  box-shadow: 0 8px 18px rgba(244, 170, 50, 0.28);
+}
