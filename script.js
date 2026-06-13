@@ -199,7 +199,8 @@ let state = {
     blocks: []
   },
   roster: [],
-  savedPractices: []
+savedPractices: [],
+favoriteDrills: []
 };
 
 let drillSearch = "";
@@ -244,7 +245,7 @@ function loadState() {
   if (!Array.isArray(state.roster)) state.roster = [];
   if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
 }
-
+if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => {
     return {
@@ -662,18 +663,34 @@ function renderPlan() {
 
 function renderCategories() {
   const categoryChips = document.getElementById("categoryChips");
-  const categories = ["All", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
+const categories = ["All", "Favorites", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
 
   categoryChips.innerHTML = categories.map(category => `
     <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>
   `).join("");
 }
+function isFavoriteDrill(id) {
+  return state.favoriteDrills.includes(id);
+}
 
+function toggleFavoriteDrill(id) {
+  if (isFavoriteDrill(id)) {
+    state.favoriteDrills = state.favoriteDrills.filter(drillId => drillId !== id);
+  } else {
+    state.favoriteDrills.push(id);
+  }
+
+  saveState();
+  renderDrills();
+}
 function filteredDrills() {
   const q = drillSearch.toLowerCase().trim();
 
   return DRILLS.filter(drill => {
-    const categoryMatch = activeCategory === "All" || drill.category === activeCategory;
+const categoryMatch =
+  activeCategory === "All" ||
+  (activeCategory === "Favorites" && isFavoriteDrill(drill.id)) ||
+  drill.category === activeCategory;
 
     const searchable = [
       drill.number,
@@ -735,9 +752,15 @@ function renderDrills() {
         </div>
 
         <div class="card-actions">
-          <button class="icon-btn" data-add-drill="${escapeHtml(drill.id)}">＋</button>
-          <button class="icon-btn" data-open-drill="${escapeHtml(drill.id)}">?</button>
-        </div>
+  <button 
+    class="icon-btn favorite-btn ${isFavoriteDrill(drill.id) ? "active" : ""}" 
+    data-toggle-favorite="${escapeHtml(drill.id)}"
+    title="Favorite drill"
+  >★</button>
+
+  <button class="icon-btn" data-add-drill="${escapeHtml(drill.id)}">＋</button>
+  <button class="icon-btn" data-open-drill="${escapeHtml(drill.id)}">?</button>
+</div>
       </div>
     `;
   });
@@ -1383,8 +1406,9 @@ document.getElementById("restoreBtn").addEventListener("click", restoreData);
 
 document.addEventListener("click", event => {
   const categoryBtn = event.target.closest("[data-category]");
-  const mentalBtn = event.target.closest("[data-mental-filter]");
-  const addDrillBtn = event.target.closest("[data-add-drill]");
+const mentalBtn = event.target.closest("[data-mental-filter]");
+const toggleFavoriteBtn = event.target.closest("[data-toggle-favorite]");
+const addDrillBtn = event.target.closest("[data-add-drill]");
   const openDrillBtn = event.target.closest("[data-open-drill]");
   const addMentalBtn = event.target.closest("[data-add-mental]");
   const openMentalBtn = event.target.closest("[data-open-mental]");
@@ -1413,7 +1437,9 @@ document.addEventListener("click", event => {
     });
     renderMental();
   }
-
+if (toggleFavoriteBtn) {
+  toggleFavoriteDrill(toggleFavoriteBtn.dataset.toggleFavorite);
+}
   if (addDrillBtn) {
     const drill = DRILLS.find(item => item.id === addDrillBtn.dataset.addDrill);
     if (drill) addBlock(buildBlockFromDrill(drill));
