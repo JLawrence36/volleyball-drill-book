@@ -823,7 +823,448 @@ function renderSaved() {
     `;
   }).join("");
 }
+function printPracticePlan() {
+  const practice = state.currentPractice || {};
+  const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
 
+  const title = practice.title && practice.title.trim()
+    ? practice.title.trim()
+    : "Volleyball Practice";
+
+  const date = practice.date ? formatDate(practice.date) : "";
+  const team = practice.team && practice.team.trim() ? practice.team.trim() : "";
+  const focus = practice.focus && practice.focus.trim() ? practice.focus.trim() : "";
+
+  const total = blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+
+  function minuteRange(start, end) {
+    return `${start}–${end} min`;
+  }
+
+  let runningMinute = 0;
+
+  const blocksHtml = blocks.length
+    ? blocks.map((block, index) => {
+        const minutes = Number(block.minutes) || 0;
+        const start = runningMinute;
+        const end = runningMinute + minutes;
+        runningMinute = end;
+
+        const typeClass = ["drill", "mental", "sc", "custom"].includes(block.type)
+          ? block.type
+          : "drill";
+
+        const steps = Array.isArray(block.details) && block.details.length
+          ? `<ol>${block.details.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`
+          : "";
+
+        return `
+          <section class="practice-block ${typeClass}">
+            <div class="block-head">
+              <div class="block-number">${index + 1}</div>
+
+              <div class="block-main">
+                <h2>${escapeHtml(block.title)}</h2>
+                <div class="block-meta">
+                  <span>${escapeHtml(minuteRange(start, end))}</span>
+                  <span>${escapeHtml(block.minutes)} min</span>
+                  <span>${escapeHtml(block.category || block.type || "Block")}</span>
+                </div>
+              </div>
+            </div>
+
+            ${block.summary ? `
+              <p class="summary">${escapeHtml(block.summary)}</p>
+            ` : ""}
+
+            ${steps ? `
+              <div class="section">
+                <h3>Run It</h3>
+                ${steps}
+              </div>
+            ` : ""}
+
+            ${block.coaching ? `
+              <div class="section">
+                <h3>Coaching Points</h3>
+                <p>${escapeHtml(block.coaching)}</p>
+              </div>
+            ` : ""}
+
+            ${block.evaluate ? `
+              <div class="section">
+                <h3>Evaluate</h3>
+                <p>${escapeHtml(block.evaluate)}</p>
+              </div>
+            ` : ""}
+
+            ${block.notes ? `
+              <div class="section notes">
+                <h3>Coach Notes</h3>
+                <p>${escapeHtml(block.notes)}</p>
+              </div>
+            ` : ""}
+          </section>
+        `;
+      }).join("")
+    : `
+      <section class="empty-print">
+        <h2>No practice blocks added.</h2>
+        <p>Add drills, mental blocks, S&C blocks, or custom notes before printing.</p>
+      </section>
+    `;
+
+  const rosterHtml = state.roster.length
+    ? state.roster.map(player => `
+        <div class="player ${player.present ? "present" : ""}">
+          <span>${player.present ? "✓" : "□"}</span>
+          ${escapeHtml(player.name)}
+        </div>
+      `).join("")
+    : `<p class="muted">No roster added.</p>`;
+
+  const printHtml = `
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${escapeHtml(title)}</title>
+
+      <style>
+        @page {
+          size: letter;
+          margin: 0.45in;
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #14212b;
+          background: white;
+        }
+
+        .sheet {
+          width: 100%;
+        }
+
+        .top-bar {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 18px;
+          align-items: start;
+          border-bottom: 5px solid #153b56;
+          padding-bottom: 16px;
+          margin-bottom: 18px;
+        }
+
+        h1 {
+          margin: 0;
+          font-size: 34px;
+          color: #153b56;
+          line-height: 1.05;
+        }
+
+        .subtitle {
+          margin-top: 8px;
+          color: #607080;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .summary-box {
+          border: 2px solid #153b56;
+          border-radius: 14px;
+          padding: 12px 14px;
+          text-align: right;
+          min-width: 150px;
+        }
+
+        .summary-box strong {
+          display: block;
+          font-size: 30px;
+          color: #153b56;
+        }
+
+        .summary-box span {
+          color: #607080;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-weight: 900;
+        }
+
+        .info-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        .info-card {
+          border: 1px solid #d7e0e8;
+          background: #f6f9fb;
+          border-radius: 12px;
+          padding: 10px;
+          min-height: 58px;
+        }
+
+        .info-card span {
+          display: block;
+          color: #6f8193;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-weight: 900;
+          margin-bottom: 4px;
+        }
+
+        .info-card strong {
+          font-size: 15px;
+          color: #14212b;
+        }
+
+        .practice-block {
+          border: 1px solid #d7e0e8;
+          border-left: 8px solid #153b56;
+          border-radius: 14px;
+          padding: 14px;
+          margin-bottom: 12px;
+          break-inside: avoid;
+        }
+
+        .practice-block.mental {
+          border-left-color: #4f5fb8;
+        }
+
+        .practice-block.sc {
+          border-left-color: #168995;
+        }
+
+        .practice-block.custom {
+          border-left-color: #607d8b;
+        }
+
+        .block-head {
+          display: grid;
+          grid-template-columns: 42px 1fr;
+          gap: 12px;
+          align-items: start;
+        }
+
+        .block-number {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+          background: #153b56;
+          color: white;
+          display: grid;
+          place-items: center;
+          font-weight: 900;
+          font-size: 20px;
+        }
+
+        .practice-block.mental .block-number {
+          background: #4f5fb8;
+        }
+
+        .practice-block.sc .block-number {
+          background: #168995;
+        }
+
+        .practice-block.custom .block-number {
+          background: #607d8b;
+        }
+
+        .block-main h2 {
+          margin: 0 0 5px;
+          font-size: 21px;
+          color: #14212b;
+        }
+
+        .block-meta {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          color: #607080;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .block-meta span {
+          background: #edf3f7;
+          border-radius: 999px;
+          padding: 5px 8px;
+        }
+
+        .summary {
+          margin: 12px 0 0;
+          color: #304255;
+          line-height: 1.35;
+          font-size: 14px;
+        }
+
+        .section {
+          margin-top: 12px;
+          border-top: 1px solid #e4ebf0;
+          padding-top: 10px;
+        }
+
+        .section h3 {
+          margin: 0 0 6px;
+          font-size: 13px;
+          color: #153b56;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .section p,
+        .section li {
+          font-size: 13.5px;
+          line-height: 1.35;
+          color: #304255;
+        }
+
+        ol {
+          margin: 0;
+          padding-left: 20px;
+        }
+
+        .notes {
+          background: #fff8ec;
+          border-radius: 10px;
+          border-top: 0;
+          padding: 10px;
+        }
+
+        .roster-section {
+          margin-top: 20px;
+          border-top: 4px solid #153b56;
+          padding-top: 14px;
+          break-inside: avoid;
+        }
+
+        .roster-section h2 {
+          margin: 0 0 10px;
+          color: #153b56;
+          font-size: 22px;
+        }
+
+        .roster-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+        }
+
+        .player {
+          border: 1px solid #d7e0e8;
+          border-radius: 10px;
+          padding: 8px 10px;
+          font-size: 14px;
+          font-weight: 800;
+        }
+
+        .player span {
+          margin-right: 6px;
+          color: #607080;
+        }
+
+        .player.present {
+          background: #f0fdf4;
+          border-color: #86efac;
+        }
+
+        .empty-print {
+          border: 2px dashed #cbd5e1;
+          border-radius: 14px;
+          padding: 28px;
+          text-align: center;
+          color: #607080;
+        }
+
+        .muted {
+          color: #607080;
+        }
+
+        .footer {
+          margin-top: 18px;
+          padding-top: 10px;
+          border-top: 1px solid #d7e0e8;
+          color: #8a9aab;
+          font-size: 11px;
+          text-align: center;
+        }
+      </style>
+    </head>
+
+    <body>
+      <main class="sheet">
+        <div class="top-bar">
+          <div>
+            <h1>${escapeHtml(title)}</h1>
+            <div class="subtitle">Volleyball Practice Plan</div>
+          </div>
+
+          <div class="summary-box">
+            <strong>${total}</strong>
+            <span>Total Minutes</span>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <span>Date</span>
+            <strong>${escapeHtml(date || "Not set")}</strong>
+          </div>
+
+          <div class="info-card">
+            <span>Team / Group</span>
+            <strong>${escapeHtml(team || "Not set")}</strong>
+          </div>
+
+          <div class="info-card">
+            <span>Practice Focus</span>
+            <strong>${escapeHtml(focus || "Not set")}</strong>
+          </div>
+        </div>
+
+        ${blocksHtml}
+
+        <section class="roster-section">
+          <h2>Attendance</h2>
+          <div class="roster-grid">
+            ${rosterHtml}
+          </div>
+        </section>
+
+        <div class="footer">
+          Built with Volleyball Practice Planner
+        </div>
+      </main>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
+
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+  }, 350);
+}
 function backupData() {
   const backup = JSON.stringify(state, null, 2);
 
