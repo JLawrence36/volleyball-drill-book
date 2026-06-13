@@ -1448,7 +1448,157 @@ function printPracticePlan() {
       }
     }
   `;
+  printStyle.textContent += `
+    @media print {
+      @page {
+        size: letter;
+        margin: 0.35in;
+      }
 
+      .print-top-bar {
+        padding-bottom: 10px !important;
+        margin-bottom: 10px !important;
+        border-bottom-width: 4px !important;
+      }
+
+      .print-top-bar h1 {
+        font-size: 26px !important;
+      }
+
+      .print-subtitle {
+        font-size: 11px !important;
+        margin-top: 4px !important;
+      }
+
+      .print-summary-box {
+        padding: 8px 10px !important;
+        min-width: 110px !important;
+        border-radius: 10px !important;
+      }
+
+      .print-summary-box strong {
+        font-size: 23px !important;
+      }
+
+      .print-summary-box span {
+        font-size: 9px !important;
+      }
+
+      .print-info-grid {
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+      }
+
+      .print-info-card {
+        min-height: 42px !important;
+        padding: 7px !important;
+        border-radius: 8px !important;
+      }
+
+      .print-info-card span {
+        font-size: 8px !important;
+        margin-bottom: 2px !important;
+      }
+
+      .print-info-card strong {
+        font-size: 11px !important;
+      }
+
+      .print-block {
+        padding: 9px !important;
+        margin-bottom: 7px !important;
+        border-radius: 10px !important;
+        border-left-width: 6px !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
+
+      .print-block-head {
+        grid-template-columns: 32px 1fr !important;
+        gap: 8px !important;
+      }
+
+      .print-block-number {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+        font-size: 15px !important;
+      }
+
+      .print-block h2 {
+        font-size: 15px !important;
+        margin-bottom: 3px !important;
+      }
+
+      .print-meta {
+        gap: 4px !important;
+        font-size: 8.5px !important;
+      }
+
+      .print-meta span {
+        padding: 3px 6px !important;
+      }
+
+      .print-summary {
+        font-size: 10.5px !important;
+        line-height: 1.25 !important;
+        margin-top: 7px !important;
+      }
+
+      .print-section {
+        margin-top: 7px !important;
+        padding-top: 6px !important;
+      }
+
+      .print-section h3 {
+        font-size: 9px !important;
+        margin-bottom: 4px !important;
+      }
+
+      .print-section p,
+      .print-section li {
+        font-size: 10px !important;
+        line-height: 1.25 !important;
+      }
+
+      .print-section ol {
+        padding-left: 16px !important;
+      }
+
+      .print-notes {
+        padding: 7px !important;
+        border-radius: 8px !important;
+      }
+
+      .print-roster-section {
+        margin-top: 12px !important;
+        padding-top: 9px !important;
+        border-top-width: 3px !important;
+      }
+
+      .print-roster-section h2 {
+        font-size: 16px !important;
+        margin-bottom: 6px !important;
+      }
+
+      .print-roster-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 5px !important;
+      }
+
+      .print-player {
+        padding: 5px 7px !important;
+        font-size: 10px !important;
+        border-radius: 7px !important;
+      }
+
+      .print-footer {
+        margin-top: 10px !important;
+        padding-top: 6px !important;
+        font-size: 8px !important;
+      }
+    }
+  `;
   document.head.appendChild(printStyle);
   document.body.appendChild(printRoot);
   document.body.classList.add("printing-practice");
