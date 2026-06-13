@@ -15,7 +15,7 @@ const CATEGORIES = [
   "Custom"
 ];
 
-const BUILT_IN_DRILLS = [
+const BUILT_IN_DRILLS = window.DRILL_DATABASE || [
   {
     id: "drill_001",
     number: "01",
