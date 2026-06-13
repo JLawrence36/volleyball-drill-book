@@ -908,7 +908,7 @@ document.getElementById("customModal").addEventListener("click", event => {
 });
 
 document.getElementById("savePracticeBtn").addEventListener("click", saveCurrentPractice);
-document.getElementById("printPracticeBtn").addEventListener("click", () => window.print());
+document.getElementById("printPracticeBtn").addEventListener("click", printPracticePlan);
 
 document.getElementById("backupBtn").addEventListener("click", backupData);
 document.getElementById("restoreBtn").addEventListener("click", restoreData);
