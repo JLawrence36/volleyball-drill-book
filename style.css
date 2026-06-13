@@ -976,3 +976,411 @@ textarea {
     height: 40px;
   }
 }
+/* ================================
+   ULTRA COMPACT COACH MODE
+   Less clunky / tighter phone layout
+   ================================ */
+
+body {
+  font-size: 13px;
+}
+
+.app-header {
+  padding: 12px 12px 9px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.brand-row {
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 23px;
+}
+
+.brand-row h1 {
+  font-size: 22px;
+}
+
+.brand-row p {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.main-tabs {
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.tab {
+  padding: 7px 1px;
+  border-radius: 11px;
+}
+
+.tab span {
+  font-size: 15px;
+}
+
+.tab strong {
+  font-size: 8.5px;
+}
+
+.app-main {
+  padding: 10px 8px 22px;
+}
+
+.practice-top,
+.team-manager-card,
+.empty-card,
+.library-card,
+.info-card,
+.saved-card,
+.backup-card,
+.roster-card,
+.plan-block,
+.category-card {
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 5px 14px rgba(16, 32, 45, 0.08);
+}
+
+.title-input {
+  font-size: 19px;
+  padding: 4px 0 6px;
+}
+
+input,
+select,
+textarea {
+  font-size: 13px;
+  border-radius: 11px;
+  padding: 8px 10px;
+}
+
+.date-input,
+.time-pill,
+.practice-fields input,
+.team-manager-controls select {
+  min-height: 38px;
+}
+
+.practice-meta,
+.practice-fields,
+.team-manager-controls,
+.bottom-actions,
+.empty-actions,
+.roster-add,
+.saved-actions,
+.backup-actions {
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.team-manager-card {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.team-manager-head {
+  margin-bottom: 7px;
+}
+
+.team-manager-head span {
+  font-size: 9px;
+}
+
+.team-manager-head strong {
+  font-size: 15px;
+}
+
+.btn,
+.icon-btn,
+.chip,
+.card-link,
+.back-card {
+  border-radius: 11px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.btn {
+  min-height: 38px;
+}
+
+.icon-btn {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 7px;
+}
+
+.bottom-actions {
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.bottom-actions .btn {
+  min-height: 40px;
+}
+
+.empty-card {
+  padding: 18px 12px;
+  margin-top: 9px;
+}
+
+.empty-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  font-size: 25px;
+  margin-bottom: 8px;
+}
+
+.empty-card h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.empty-card p {
+  font-size: 12.5px;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.section-head {
+  margin-bottom: 8px;
+}
+
+.section-head h2 {
+  font-size: 18px;
+}
+
+.section-head p {
+  font-size: 11.5px;
+}
+
+.count-badge {
+  font-size: 10px;
+  padding: 6px 8px;
+}
+
+.chip-row {
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.chip {
+  font-size: 11px;
+  padding: 7px 9px;
+}
+
+.category-dashboard {
+  gap: 8px;
+}
+
+.category-card {
+  grid-template-columns: 36px 1fr;
+  gap: 9px;
+}
+
+.category-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.category-card h3 {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.category-card p {
+  font-size: 11px;
+  line-height: 1.25;
+  margin-bottom: 5px;
+}
+
+.category-card span {
+  font-size: 10.5px;
+}
+
+.library-card {
+  padding: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.library-card h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.library-card p {
+  font-size: 11.5px;
+  line-height: 1.25;
+  margin-bottom: 5px;
+}
+
+.card-meta,
+.block-meta {
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+
+.plan-list {
+  margin-top: 8px;
+}
+
+.plan-block {
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.plan-block-top {
+  grid-template-columns: 36px 1fr auto;
+  gap: 8px;
+}
+
+.block-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.block-title {
+  font-size: 15px;
+}
+
+.block-time-edit {
+  margin-top: 6px;
+}
+
+.block-time-edit span {
+  font-size: 9px;
+}
+
+.block-time-edit input {
+  max-width: 80px;
+  min-height: 34px;
+  margin-top: 3px;
+}
+
+.block-notes {
+  min-height: 46px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.roster-name {
+  font-size: 14px;
+}
+
+.roster-status {
+  font-size: 11px;
+}
+
+.saved-card h3 {
+  font-size: 14px;
+}
+
+.saved-card p {
+  font-size: 11px;
+}
+
+.backup-card h3 {
+  font-size: 16px;
+}
+
+.backup-help {
+  font-size: 12px;
+}
+
+.backup-card textarea {
+  min-height: 110px;
+  font-size: 10px;
+}
+
+.modal-panel {
+  border-radius: 18px;
+  padding: 12px;
+}
+
+.detail-title {
+  font-size: 19px;
+}
+
+.detail-meta,
+.detail-section p,
+.detail-section li {
+  font-size: 12px;
+}
+
+@media (max-width: 430px) {
+  .app-main {
+    padding: 9px 7px 20px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 21px;
+  }
+
+  .brand-row h1 {
+    font-size: 20px;
+  }
+
+  .tab span {
+    font-size: 14px;
+  }
+
+  .tab strong {
+    font-size: 8px;
+  }
+
+  .title-input {
+    font-size: 18px;
+  }
+
+  .practice-top,
+  .team-manager-card,
+  .empty-card,
+  .library-card,
+  .info-card,
+  .saved-card,
+  .backup-card,
+  .roster-card,
+  .plan-block,
+  .category-card {
+    border-radius: 14px;
+  }
+
+  .bottom-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bottom-actions .btn:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
+  .plan-block-top {
+    grid-template-columns: 34px 1fr;
+  }
+
+  .block-actions {
+    grid-column: 1 / -1;
+    padding-left: 42px;
+  }
+
+  .block-num {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+}
