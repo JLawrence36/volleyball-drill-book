@@ -357,7 +357,17 @@ function duplicateBlock(id) {
   saveState();
   renderAll();
 }
+function updateBlockMinutes(id, value) {
+  const block = state.currentPractice.blocks.find(item => item.id === id);
+  if (!block) return;
 
+  const minutes = Math.max(1, Number(value) || 1);
+  block.minutes = minutes;
+
+  document.getElementById("totalMinutes").textContent = `${totalMinutes()}m`;
+
+  saveState();
+}
 function updateBlockNotes(id, notes) {
   const block = state.currentPractice.blocks.find(item => item.id === id);
   if (!block) return;
@@ -1495,8 +1505,14 @@ document.addEventListener("click", event => {
 
 document.addEventListener("input", event => {
   const notesInput = event.target.closest("[data-block-notes]");
+  const minutesInput = event.target.closest("[data-block-minutes]");
+
   if (notesInput) {
     updateBlockNotes(notesInput.dataset.blockNotes, notesInput.value);
+  }
+
+  if (minutesInput) {
+    updateBlockMinutes(minutesInput.dataset.blockMinutes, minutesInput.value);
   }
 });
 
