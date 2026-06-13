@@ -188,29 +188,34 @@ const SC_BLOCKS = [
   }
 ];
 
-let state = {
-  activeTab: "plan",
-  currentPractice: {
-    id: makeId("practice"),
-    title: "",
-    date: today(),
-    team: "",
-    focus: "",
-    blocks: []
-  },
-  roster: [],
-savedPractices: [],
-favoriteDrills: []
-};
-
 let drillSearch = "";
 let activeCategory = "All";
 let mentalFilter = "All";
 
+let state = defaultState();
+
+function defaultState() {
+  return {
+    activeTab: "plan",
+    currentPractice: {
+      id: makeId("practice"),
+      title: "",
+      date: today(),
+      team: "",
+      focus: "",
+      blocks: []
+    },
+    roster: [],
+    savedPractices: [],
+    favoriteDrills: []
+  };
+}
+
 function makeId(prefix) {
-  if (window.crypto && crypto.randomUUID) {
-    return `${prefix}_${crypto.randomUUID()}`;
+  if (window.crypto && window.crypto.randomUUID) {
+    return `${prefix}_${window.crypto.randomUUID()}`;
   }
+
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 }
 
@@ -218,34 +223,14 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function $(id) {
+  return document.getElementById(id);
 }
 
-function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-
-  if (!saved) return;
-
-  try {
-    const parsed = JSON.parse(saved);
-    state = {
-      ...state,
-      ...parsed,
-      currentPractice: {
-        ...state.currentPractice,
-        ...(parsed.currentPractice || {})
-      }
-    };
-  } catch {
-    saveState();
-  }
-
-  if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
-  if (!Array.isArray(state.roster)) state.roster = [];
-  if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
+function $all(selector) {
+  return Array.from(document.querySelectorAll(selector));
 }
-if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => {
     return {
@@ -258,8 +243,50 @@ function escapeHtml(value) {
   });
 }
 
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  const fresh = defaultState();
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (!saved) {
+    state = fresh;
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(saved);
+
+    state = {
+      ...fresh,
+      ...parsed,
+      currentPractice: {
+        ...fresh.currentPractice,
+        ...(parsed.currentPractice || {})
+      }
+    };
+  } catch {
+    state = fresh;
+  }
+
+  if (!state.currentPractice) state.currentPractice = fresh.currentPractice;
+  if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
+  if (!Array.isArray(state.roster)) state.roster = [];
+  if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
+  if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
+
+  state.favoriteDrills = [...new Set(state.favoriteDrills)];
+
+  if (!state.currentPractice.id) state.currentPractice.id = makeId("practice");
+  if (!state.currentPractice.date) state.currentPractice.date = today();
+  if (!state.activeTab) state.activeTab = "plan";
+}
+
 function formatDate(value) {
   if (!value) return "";
+
   try {
     return new Date(value + "T00:00:00").toLocaleDateString();
   } catch {
@@ -268,22 +295,53 @@ function formatDate(value) {
 }
 
 function totalMinutes() {
-  return state.currentPractice.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+  return state.currentPractice.blocks.reduce((sum, block) => {
+    return sum + (Number(block.minutes) || 0);
+  }, 0);
 }
 
 function switchTab(tabName) {
+  const validTabs = ["plan", "drills", "mental", "sc", "roster", "saved"];
+
+  if (!validTabs.includes(tabName)) {
+    tabName = "plan";
+  }
+
   state.activeTab = tabName;
 
-  document.querySelectorAll(".tab").forEach(tab => {
+  $all(".tab").forEach(tab => {
     tab.classList.toggle("active", tab.dataset.tab === tabName);
   });
 
-  document.querySelectorAll(".screen").forEach(screen => {
+  $all(".screen").forEach(screen => {
     screen.classList.toggle("active", screen.id === tabName);
   });
 
   saveState();
   renderAll();
+}
+
+function isFavoriteDrill(id) {
+  return Array.isArray(state.favoriteDrills) && state.favoriteDrills.includes(id);
+}
+
+function toggleFavoriteDrill(id) {
+  if (!id) return;
+
+  if (!Array.isArray(state.favoriteDrills)) {
+    state.favoriteDrills = [];
+  }
+
+  if (isFavoriteDrill(id)) {
+    state.favoriteDrills = state.favoriteDrills.filter(drillId => drillId !== id);
+  } else {
+    state.favoriteDrills.push(id);
+  }
+
+  state.favoriteDrills = [...new Set(state.favoriteDrills)];
+
+  saveState();
+  renderDrills();
 }
 
 function buildBlockFromDrill(drill) {
@@ -310,7 +368,7 @@ function buildBlockFromLibrary(item, type) {
     category: item.category,
     minutes: Number(item.minutes) || 5,
     summary: item.summary || "",
-    details: item.details || [],
+    details: Array.isArray(item.details) ? item.details : [],
     coaching: item.coaching || "",
     evaluate: "",
     notes: "",
@@ -321,7 +379,6 @@ function buildBlockFromLibrary(item, type) {
 function addBlock(block) {
   state.currentPractice.blocks.push(block);
   saveState();
-  renderAll();
   switchTab("plan");
 }
 
@@ -334,18 +391,22 @@ function removeBlock(id) {
 function moveBlock(id, direction) {
   const blocks = state.currentPractice.blocks;
   const index = blocks.findIndex(block => block.id === id);
+
   if (index < 0) return;
 
   const nextIndex = index + direction;
+
   if (nextIndex < 0 || nextIndex >= blocks.length) return;
 
   [blocks[index], blocks[nextIndex]] = [blocks[nextIndex], blocks[index]];
+
   saveState();
   renderAll();
 }
 
 function duplicateBlock(id) {
   const block = state.currentPractice.blocks.find(item => item.id === id);
+
   if (!block) return;
 
   const copy = {
@@ -358,19 +419,23 @@ function duplicateBlock(id) {
   saveState();
   renderAll();
 }
+
 function updateBlockMinutes(id, value) {
   const block = state.currentPractice.blocks.find(item => item.id === id);
+
   if (!block) return;
 
   const minutes = Math.max(1, Number(value) || 1);
   block.minutes = minutes;
 
-  document.getElementById("totalMinutes").textContent = `${totalMinutes()}m`;
+  $("totalMinutes").textContent = `${totalMinutes()}m`;
 
   saveState();
 }
+
 function updateBlockNotes(id, notes) {
   const block = state.currentPractice.blocks.find(item => item.id === id);
+
   if (!block) return;
 
   block.notes = notes;
@@ -378,21 +443,21 @@ function updateBlockNotes(id, notes) {
 }
 
 function updatePracticeDetails() {
-  state.currentPractice.title = document.getElementById("practiceTitle").value;
-  state.currentPractice.date = document.getElementById("practiceDate").value;
-  state.currentPractice.team = document.getElementById("practiceTeam").value;
-  state.currentPractice.focus = document.getElementById("practiceFocus").value;
+  state.currentPractice.title = $("practiceTitle").value;
+  state.currentPractice.date = $("practiceDate").value;
+  state.currentPractice.team = $("practiceTeam").value;
+  state.currentPractice.focus = $("practiceFocus").value;
+
   saveState();
 }
 
 function saveCurrentPractice() {
-  const practice = {
-    ...JSON.parse(JSON.stringify(state.currentPractice)),
-    id: state.currentPractice.id || makeId("practice"),
-    updatedAt: new Date().toISOString()
-  };
+  const practice = JSON.parse(JSON.stringify(state.currentPractice));
 
-  if (!practice.title.trim()) {
+  practice.id = practice.id || makeId("practice");
+  practice.updatedAt = new Date().toISOString();
+
+  if (!practice.title || !practice.title.trim()) {
     practice.title = "Untitled Practice";
   }
 
@@ -405,6 +470,7 @@ function saveCurrentPractice() {
   }
 
   state.currentPractice = practice;
+
   saveState();
   renderAll();
   alert("Practice saved.");
@@ -412,16 +478,18 @@ function saveCurrentPractice() {
 
 function loadPractice(id) {
   const practice = state.savedPractices.find(item => item.id === id);
+
   if (!practice) return;
 
   state.currentPractice = JSON.parse(JSON.stringify(practice));
+
   saveState();
-  renderAll();
   switchTab("plan");
 }
 
 function duplicatePractice(id) {
   const practice = state.savedPractices.find(item => item.id === id);
+
   if (!practice) return;
 
   const copy = {
@@ -432,6 +500,7 @@ function duplicatePractice(id) {
   };
 
   state.savedPractices.unshift(copy);
+
   saveState();
   renderAll();
 }
@@ -440,29 +509,13 @@ function deletePractice(id) {
   if (!confirm("Delete this saved practice?")) return;
 
   state.savedPractices = state.savedPractices.filter(item => item.id !== id);
-  saveState();
-  renderAll();
-}
-
-function newPractice() {
-  if (!confirm("Start a new blank practice? Save this one first if you want to keep it.")) return;
-
-  state.currentPractice = {
-    id: makeId("practice"),
-    title: "",
-    date: today(),
-    team: "",
-    focus: "",
-    blocks: []
-  };
 
   saveState();
   renderAll();
-  switchTab("plan");
 }
 
 function addPlayer() {
-  const input = document.getElementById("playerNameInput");
+  const input = $("playerNameInput");
   const name = input.value.trim();
 
   if (!name) return;
@@ -474,42 +527,46 @@ function addPlayer() {
   });
 
   input.value = "";
+
   saveState();
-  renderAll();
+  renderRoster();
 }
 
 function togglePlayer(id) {
   const player = state.roster.find(item => item.id === id);
+
   if (!player) return;
 
   player.present = !player.present;
+
   saveState();
-  renderAll();
+  renderRoster();
 }
 
 function deletePlayer(id) {
   if (!confirm("Remove this player?")) return;
 
   state.roster = state.roster.filter(item => item.id !== id);
+
   saveState();
-  renderAll();
+  renderRoster();
 }
 
 function openCustomModal() {
-  document.getElementById("customTitle").value = "";
-  document.getElementById("customMinutes").value = "";
-  document.getElementById("customNotes").value = "";
-  document.getElementById("customModal").classList.remove("hidden");
+  $("customTitle").value = "";
+  $("customMinutes").value = "";
+  $("customNotes").value = "";
+  $("customModal").classList.remove("hidden");
 }
 
 function closeCustomModal() {
-  document.getElementById("customModal").classList.add("hidden");
+  $("customModal").classList.add("hidden");
 }
 
 function saveCustomBlock() {
-  const title = document.getElementById("customTitle").value.trim();
-  const minutes = Number(document.getElementById("customMinutes").value) || 5;
-  const notes = document.getElementById("customNotes").value.trim();
+  const title = $("customTitle").value.trim();
+  const minutes = Number($("customMinutes").value) || 5;
+  const notes = $("customNotes").value.trim();
 
   if (!title) {
     alert("Add a block title.");
@@ -533,6 +590,10 @@ function saveCustomBlock() {
   closeCustomModal();
 }
 
+function closeDetails() {
+  $("detailsModal").classList.add("hidden");
+}
+
 function openDetails(item, type) {
   let title = "";
   let meta = "";
@@ -552,15 +613,15 @@ function openDetails(item, type) {
     title = item.title;
     meta = `${item.category} · ${item.minutes} min`;
     summary = item.summary || "";
-    details = item.details || [];
+    details = Array.isArray(item.details) ? item.details : [];
     coaching = item.coaching || "";
   }
 
-  const detailList = details.length
+  const detailsHtml = details.length
     ? `<ol>${details.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`
     : `<p>No steps added yet.</p>`;
 
-  document.getElementById("detailsContent").innerHTML = `
+  $("detailsContent").innerHTML = `
     <h2 class="detail-title">${escapeHtml(title)}</h2>
     <div class="detail-meta">${escapeHtml(meta)}</div>
 
@@ -571,7 +632,7 @@ function openDetails(item, type) {
 
     <div class="detail-section">
       <h3>How to Run It</h3>
-      ${detailList}
+      ${detailsHtml}
     </div>
 
     ${coaching ? `
@@ -589,39 +650,84 @@ function openDetails(item, type) {
     ` : ""}
 
     <div class="bottom-actions">
-      <button class="btn dark" data-modal-add="${escapeHtml(item.id)}" data-modal-type="${type}">＋ Add to Practice</button>
+      <button class="btn dark" data-modal-add="${escapeHtml(item.id)}" data-modal-type="${escapeHtml(type)}">＋ Add to Practice</button>
     </div>
   `;
 
-  document.getElementById("detailsModal").classList.remove("hidden");
+  $("detailsModal").classList.remove("hidden");
 }
 
-function closeDetails() {
-  document.getElementById("detailsModal").classList.add("hidden");
+function getSortedDrills(drills) {
+  return [...drills].sort((a, b) => {
+    const categoryA = CATEGORY_ORDER.indexOf(a.category);
+    const categoryB = CATEGORY_ORDER.indexOf(b.category);
+
+    const safeA = categoryA === -1 ? 999 : categoryA;
+    const safeB = categoryB === -1 ? 999 : categoryB;
+
+    if (safeA !== safeB) return safeA - safeB;
+
+    return Number(a.number || 0) - Number(b.number || 0);
+  });
+}
+
+function filteredDrills() {
+  const query = drillSearch.toLowerCase().trim();
+
+  return getSortedDrills(DRILLS).filter(drill => {
+    const categoryMatch =
+      activeCategory === "All" ||
+      (activeCategory === "Favorites" && isFavoriteDrill(drill.id)) ||
+      drill.category === activeCategory;
+
+    const searchable = [
+      drill.id,
+      drill.number,
+      drill.category,
+      drill.name,
+      drill.players,
+      drill.time,
+      drill.level,
+      drill.skills,
+      drill.purpose,
+      drill.setup,
+      Array.isArray(drill.run) ? drill.run.join(" ") : "",
+      drill.coaching,
+      drill.evaluate
+    ].join(" ").toLowerCase();
+
+    const searchMatch = !query || searchable.includes(query);
+
+    return categoryMatch && searchMatch;
+  });
 }
 
 function renderPlan() {
   const practice = state.currentPractice;
 
-  document.getElementById("practiceTitle").value = practice.title || "";
-  document.getElementById("practiceDate").value = practice.date || today();
-  document.getElementById("practiceTeam").value = practice.team || "";
-  document.getElementById("practiceFocus").value = practice.focus || "";
-  document.getElementById("totalMinutes").textContent = `${totalMinutes()}m`;
+  $("practiceTitle").value = practice.title || "";
+  $("practiceDate").value = practice.date || today();
+  $("practiceTeam").value = practice.team || "";
+  $("practiceFocus").value = practice.focus || "";
+  $("totalMinutes").textContent = `${totalMinutes()}m`;
 
-  const planList = document.getElementById("planList");
-  const emptyPlan = document.getElementById("emptyPlan");
+  const list = $("planList");
+  const empty = $("emptyPlan");
 
   if (practice.blocks.length === 0) {
-    planList.innerHTML = "";
-    emptyPlan.style.display = "block";
+    list.innerHTML = "";
+    empty.style.display = "block";
     return;
   }
 
-  emptyPlan.style.display = "none";
+  empty.style.display = "none";
 
-  planList.innerHTML = practice.blocks.map((block, index) => {
-    const typeClass = block.type === "mental" ? "mental" : block.type === "sc" ? "sc" : block.type === "custom" ? "custom" : "";
+  list.innerHTML = practice.blocks.map((block, index) => {
+    const typeClass =
+      block.type === "mental" ? "mental" :
+      block.type === "sc" ? "sc" :
+      block.type === "custom" ? "custom" :
+      "";
 
     return `
       <div class="plan-block">
@@ -630,21 +736,22 @@ function renderPlan() {
 
           <div>
             <h3 class="block-title">${escapeHtml(block.title)}</h3>
-   <div class="block-meta">
-  ${escapeHtml(block.category || block.type)}
-  ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
-</div>
 
-<div class="block-time-edit">
-  <span>Minutes</span>
-  <input 
-    type="number" 
-    min="1" 
-    max="180" 
-    value="${escapeHtml(block.minutes || 0)}" 
-    data-block-minutes="${escapeHtml(block.id)}"
-  />
-</div>
+            <div class="block-meta">
+              ${escapeHtml(block.category || block.type)}
+              ${block.summary ? `· ${escapeHtml(block.summary)}` : ""}
+            </div>
+
+            <div class="block-time-edit">
+              <span>Minutes</span>
+              <input 
+                type="number" 
+                min="1" 
+                max="180" 
+                value="${escapeHtml(block.minutes || 1)}" 
+                data-block-minutes="${escapeHtml(block.id)}"
+              />
+            </div>
           </div>
 
           <div class="block-actions">
@@ -662,67 +769,50 @@ function renderPlan() {
 }
 
 function renderCategories() {
-  const categoryChips = document.getElementById("categoryChips");
-const categories = ["All", "Favorites", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
+  const categoryChips = $("categoryChips");
+  const realCategories = CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category));
+  const categories = ["All", "Favorites", ...realCategories];
 
-  categoryChips.innerHTML = categories.map(category => `
-    <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>
-  `).join("");
-}
-function isFavoriteDrill(id) {
-  return state.favoriteDrills.includes(id);
-}
-
-function toggleFavoriteDrill(id) {
-  if (isFavoriteDrill(id)) {
-    state.favoriteDrills = state.favoriteDrills.filter(drillId => drillId !== id);
-  } else {
-    state.favoriteDrills.push(id);
+  if (!categories.includes(activeCategory)) {
+    activeCategory = "All";
   }
 
-  saveState();
-  renderDrills();
-}
-function filteredDrills() {
-  const q = drillSearch.toLowerCase().trim();
+  categoryChips.innerHTML = categories.map(category => {
+    const label = category === "Favorites"
+      ? `★ Favorites (${state.favoriteDrills.length})`
+      : category;
 
-  return DRILLS.filter(drill => {
-const categoryMatch =
-  activeCategory === "All" ||
-  (activeCategory === "Favorites" && isFavoriteDrill(drill.id)) ||
-  drill.category === activeCategory;
-
-    const searchable = [
-      drill.number,
-      drill.category,
-      drill.name,
-      drill.players,
-      drill.time,
-      drill.level,
-      drill.skills,
-      drill.purpose,
-      drill.setup,
-      Array.isArray(drill.run) ? drill.run.join(" ") : "",
-      drill.coaching,
-      drill.evaluate
-    ].join(" ").toLowerCase();
-
-    const searchMatch = !q || searchable.includes(q);
-
-    return categoryMatch && searchMatch;
-  });
+    return `
+      <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">
+        ${escapeHtml(label)}
+      </button>
+    `;
+  }).join("");
 }
 
 function renderDrills() {
   renderCategories();
 
-  const list = document.getElementById("drillLibrary");
+  const list = $("drillLibrary");
   const drills = filteredDrills();
 
-  document.getElementById("drillCountBadge").textContent = `${drills.length} drills`;
+  $("drillCountBadge").textContent = `${drills.length} drills`;
 
-  if (drills.length === 0) {
-    list.innerHTML = `<div class="empty-card small"><p>No drills found.</p></div>`;
+  if (!DRILLS.length) {
+    list.innerHTML = `
+      <div class="empty-card small">
+        <p>No drills loaded. Check that drills.js is still connected above script.js.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!drills.length) {
+    list.innerHTML = `
+      <div class="empty-card small">
+        <p>No drills found.</p>
+      </div>
+    `;
     return;
   }
 
@@ -730,8 +820,11 @@ function renderDrills() {
   let lastCategory = "";
 
   drills.forEach(drill => {
+    const favorite = isFavoriteDrill(drill.id);
+
     if (drill.category !== lastCategory) {
       lastCategory = drill.category;
+
       html += `
         <div class="category-title">
           <span class="category-dot"></span>
@@ -743,24 +836,43 @@ function renderDrills() {
     html += `
       <div class="library-card">
         <div>
-          <h3>${escapeHtml(drill.name)}</h3>
-          <p>${escapeHtml(drill.purpose)}</p>
+          <h3>${escapeHtml(drill.number ? drill.number + ". " + drill.name : drill.name)}</h3>
+          <p>${escapeHtml(drill.purpose || "")}</p>
+
           <div class="card-meta">
-            ${escapeHtml(drill.level)} · ${escapeHtml(drill.time)} min · ${escapeHtml(drill.players)} · ${escapeHtml(drill.skills)}
+            ${escapeHtml(drill.level || "All levels")} · 
+            ${escapeHtml(drill.time || 10)} min · 
+            ${escapeHtml(drill.players || "Any")} · 
+            ${escapeHtml(drill.skills || "Volleyball")}
             · <button class="card-link" data-open-drill="${escapeHtml(drill.id)}">Details</button>
           </div>
         </div>
 
         <div class="card-actions">
-  <button 
-    class="icon-btn favorite-btn ${isFavoriteDrill(drill.id) ? "active" : ""}" 
-    data-toggle-favorite="${escapeHtml(drill.id)}"
-    title="Favorite drill"
-  >★</button>
+          <button 
+            type="button"
+            class="icon-btn favorite-btn ${favorite ? "active" : ""}" 
+            data-toggle-favorite="${escapeHtml(drill.id)}"
+            aria-label="Favorite drill"
+            title="Favorite drill"
+          >${favorite ? "★" : "☆"}</button>
 
-  <button class="icon-btn" data-add-drill="${escapeHtml(drill.id)}">＋</button>
-  <button class="icon-btn" data-open-drill="${escapeHtml(drill.id)}">?</button>
-</div>
+          <button 
+            type="button"
+            class="icon-btn" 
+            data-add-drill="${escapeHtml(drill.id)}"
+            aria-label="Add drill"
+            title="Add drill"
+          >＋</button>
+
+          <button 
+            type="button"
+            class="icon-btn" 
+            data-open-drill="${escapeHtml(drill.id)}"
+            aria-label="Open drill details"
+            title="Open drill details"
+          >?</button>
+        </div>
       </div>
     `;
   });
@@ -769,56 +881,58 @@ function renderDrills() {
 }
 
 function renderMental() {
-  const list = document.getElementById("mentalLibrary");
+  $all("[data-mental-filter]").forEach(button => {
+    button.classList.toggle("active", button.dataset.mentalFilter === mentalFilter);
+  });
 
   const blocks = MENTAL_BLOCKS.filter(item => {
     return mentalFilter === "All" || item.category === mentalFilter;
   });
 
-  list.innerHTML = blocks.map((item, index) => `
+  $("mentalLibrary").innerHTML = blocks.map((item, index) => `
     <div class="library-card">
       <div>
         <h3>${index + 1}. ${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.summary)}</p>
+
         <div class="card-meta">
-          ${escapeHtml(item.minutes)} min session ·
-          <button class="card-link" data-open-mental="${escapeHtml(item.id)}">Open session</button>
+          ${escapeHtml(item.category)} · ${escapeHtml(item.minutes)} min
+          · <button class="card-link" data-open-mental="${escapeHtml(item.id)}">Open session</button>
         </div>
       </div>
 
       <div class="card-actions">
-        <button class="icon-btn" data-add-mental="${escapeHtml(item.id)}">＋</button>
+        <button type="button" class="icon-btn" data-add-mental="${escapeHtml(item.id)}">＋</button>
       </div>
     </div>
   `).join("");
 }
 
 function renderSC() {
-  const list = document.getElementById("scLibrary");
-
-  list.innerHTML = SC_BLOCKS.map((item, index) => `
+  $("scLibrary").innerHTML = SC_BLOCKS.map((item, index) => `
     <div class="library-card">
       <div>
         <h3>${index + 1}. ${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.summary)}</p>
+
         <div class="card-meta">
           ${escapeHtml(item.category)} · ${escapeHtml(item.minutes)} min
-          · <button class="card-link" data-open-sc="${escapeHtml(item.id)}">Open drills</button>
+          · <button class="card-link" data-open-sc="${escapeHtml(item.id)}">Open block</button>
         </div>
       </div>
 
       <div class="card-actions">
-        <button class="icon-btn" data-add-sc="${escapeHtml(item.id)}">＋</button>
+        <button type="button" class="icon-btn" data-add-sc="${escapeHtml(item.id)}">＋</button>
       </div>
     </div>
   `).join("");
 }
 
 function renderRoster() {
-  const list = document.getElementById("rosterList");
-  const empty = document.getElementById("emptyRoster");
+  const list = $("rosterList");
+  const empty = $("emptyRoster");
 
-  if (state.roster.length === 0) {
+  if (!state.roster.length) {
     list.innerHTML = "";
     empty.style.display = "block";
     return;
@@ -833,16 +947,16 @@ function renderRoster() {
         <div class="roster-status">${player.present ? "Present" : "Tap to mark present"}</div>
       </div>
 
-      <button class="icon-btn danger" data-delete-player="${escapeHtml(player.id)}">×</button>
+      <button type="button" class="icon-btn danger" data-delete-player="${escapeHtml(player.id)}">×</button>
     </div>
   `).join("");
 }
 
 function renderSaved() {
-  const list = document.getElementById("savedList");
-  const empty = document.getElementById("emptySaved");
+  const list = $("savedList");
+  const empty = $("emptySaved");
 
-  if (state.savedPractices.length === 0) {
+  if (!state.savedPractices.length) {
     list.innerHTML = "";
     empty.style.display = "block";
     return;
@@ -851,22 +965,82 @@ function renderSaved() {
   empty.style.display = "none";
 
   list.innerHTML = state.savedPractices.map(practice => {
-    const minutes = (practice.blocks || []).reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+    const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
+    const minutes = blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
 
     return `
       <div class="saved-card">
         <h3>${escapeHtml(practice.title || "Untitled Practice")}</h3>
-        <p>${escapeHtml(formatDate(practice.date))} · ${minutes} min · ${(practice.blocks || []).length} blocks</p>
+        <p>${escapeHtml(formatDate(practice.date))} · ${minutes} min · ${blocks.length} blocks</p>
 
         <div class="saved-actions">
-          <button class="btn dark" data-load-practice="${escapeHtml(practice.id)}">Load</button>
-          <button class="btn light" data-dupe-practice="${escapeHtml(practice.id)}">Duplicate</button>
-          <button class="btn danger" data-delete-practice="${escapeHtml(practice.id)}">Delete</button>
+          <button type="button" class="btn dark" data-load-practice="${escapeHtml(practice.id)}">Load</button>
+          <button type="button" class="btn light" data-dupe-practice="${escapeHtml(practice.id)}">Duplicate</button>
+          <button type="button" class="btn danger" data-delete-practice="${escapeHtml(practice.id)}">Delete</button>
         </div>
       </div>
     `;
   }).join("");
 }
+
+function renderAll() {
+  renderPlan();
+  renderDrills();
+  renderMental();
+  renderSC();
+  renderRoster();
+  renderSaved();
+}
+
+function backupData() {
+  const backup = JSON.stringify(state, null, 2);
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(backup).then(() => {
+      alert("Backup copied to clipboard.");
+    }).catch(() => {
+      prompt("Copy this backup text:", backup);
+    });
+  } else {
+    prompt("Copy this backup text:", backup);
+  }
+}
+
+function restoreData() {
+  const raw = $("restoreText").value.trim();
+
+  if (!raw) {
+    alert("Paste backup text first.");
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (!parsed.currentPractice) {
+      alert("That does not look like a valid backup.");
+      return;
+    }
+
+    state = {
+      ...defaultState(),
+      ...parsed
+    };
+
+    if (!Array.isArray(state.roster)) state.roster = [];
+    if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
+    if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
+    if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
+
+    saveState();
+    renderAll();
+
+    alert("Backup restored.");
+  } catch {
+    alert("Could not read that backup text.");
+  }
+}
+
 function printPracticePlan() {
   const practice = state.currentPractice || {};
   const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
@@ -917,9 +1091,7 @@ function printPracticePlan() {
               </div>
             </div>
 
-            ${block.summary ? `
-              <p class="summary">${escapeHtml(block.summary)}</p>
-            ` : ""}
+            ${block.summary ? `<p class="summary">${escapeHtml(block.summary)}</p>` : ""}
 
             ${steps ? `
               <div class="section">
@@ -975,24 +1147,15 @@ function printPracticePlan() {
       <title>${escapeHtml(title)}</title>
 
       <style>
-        @page {
-          size: letter;
-          margin: 0.45in;
-        }
+        @page { size: letter; margin: 0.45in; }
 
-        * {
-          box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
           margin: 0;
           font-family: Arial, Helvetica, sans-serif;
           color: #14212b;
           background: white;
-        }
-
-        .sheet {
-          width: 100%;
         }
 
         .top-bar {
@@ -1080,17 +1243,9 @@ function printPracticePlan() {
           break-inside: avoid;
         }
 
-        .practice-block.mental {
-          border-left-color: #4f5fb8;
-        }
-
-        .practice-block.sc {
-          border-left-color: #168995;
-        }
-
-        .practice-block.custom {
-          border-left-color: #607d8b;
-        }
+        .practice-block.mental { border-left-color: #4f5fb8; }
+        .practice-block.sc { border-left-color: #168995; }
+        .practice-block.custom { border-left-color: #607d8b; }
 
         .block-head {
           display: grid;
@@ -1111,17 +1266,9 @@ function printPracticePlan() {
           font-size: 20px;
         }
 
-        .practice-block.mental .block-number {
-          background: #4f5fb8;
-        }
-
-        .practice-block.sc .block-number {
-          background: #168995;
-        }
-
-        .practice-block.custom .block-number {
-          background: #607d8b;
-        }
+        .practice-block.mental .block-number { background: #4f5fb8; }
+        .practice-block.sc .block-number { background: #168995; }
+        .practice-block.custom .block-number { background: #607d8b; }
 
         .block-main h2 {
           margin: 0 0 5px;
@@ -1302,254 +1449,228 @@ function printPracticePlan() {
   printWindow.document.open();
   printWindow.document.write(printHtml);
   printWindow.document.close();
-
   printWindow.focus();
 
   setTimeout(() => {
     printWindow.print();
   }, 350);
 }
-function backupData() {
-  const backup = JSON.stringify(state, null, 2);
 
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(backup).then(() => {
-      alert("Backup copied to clipboard.");
-    }).catch(() => {
-      prompt("Copy this backup text:", backup);
+function initEvents() {
+  $all(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      switchTab(tab.dataset.tab);
     });
-  } else {
-    prompt("Copy this backup text:", backup);
-  }
-}
+  });
 
-function restoreData() {
-  const raw = document.getElementById("restoreText").value.trim();
+  $all("[data-jump]").forEach(button => {
+    button.addEventListener("click", () => {
+      switchTab(button.dataset.jump);
+    });
+  });
 
-  if (!raw) {
-    alert("Paste backup text first.");
-    return;
-  }
+  ["practiceTitle", "practiceDate", "practiceTeam", "practiceFocus"].forEach(id => {
+    const element = $(id);
+    if (element) {
+      element.addEventListener("input", updatePracticeDetails);
+    }
+  });
 
-  try {
-    const parsed = JSON.parse(raw);
+  $("drillSearch").addEventListener("input", event => {
+    drillSearch = event.target.value;
+    renderDrills();
+  });
 
-    if (!parsed.currentPractice || !Array.isArray(parsed.savedPractices)) {
-      alert("That does not look like a valid backup.");
+  $("addPlayerBtn").addEventListener("click", addPlayer);
+
+  $("playerNameInput").addEventListener("keydown", event => {
+    if (event.key === "Enter") addPlayer();
+  });
+
+  $("addCustomBlockBtn").addEventListener("click", openCustomModal);
+  $("closeCustomBtn").addEventListener("click", closeCustomModal);
+  $("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
+
+  $("closeDetailsBtn").addEventListener("click", closeDetails);
+
+  $("detailsModal").addEventListener("click", event => {
+    if (event.target.id === "detailsModal") closeDetails();
+  });
+
+  $("customModal").addEventListener("click", event => {
+    if (event.target.id === "customModal") closeCustomModal();
+  });
+
+  $("savePracticeBtn").addEventListener("click", saveCurrentPractice);
+
+  $("printPracticeBtn").addEventListener("click", () => {
+    if (typeof printPracticePlan === "function") {
+      printPracticePlan();
+    } else {
+      window.print();
+    }
+  });
+
+  $("backupBtn").addEventListener("click", backupData);
+  $("restoreBtn").addEventListener("click", restoreData);
+
+  document.addEventListener("input", event => {
+    const notesInput = event.target.closest("[data-block-notes]");
+    const minutesInput = event.target.closest("[data-block-minutes]");
+
+    if (notesInput) {
+      updateBlockNotes(notesInput.dataset.blockNotes, notesInput.value);
+    }
+
+    if (minutesInput) {
+      updateBlockMinutes(minutesInput.dataset.blockMinutes, minutesInput.value);
+    }
+  });
+
+  document.addEventListener("click", event => {
+    const favoriteBtn = event.target.closest("[data-toggle-favorite]");
+    if (favoriteBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleFavoriteDrill(favoriteBtn.dataset.toggleFavorite);
       return;
     }
 
-    state = parsed;
-    saveState();
-    renderAll();
-    alert("Backup restored.");
-  } catch {
-    alert("Could not read that backup text.");
-  }
-}
+    const categoryBtn = event.target.closest("[data-category]");
+    if (categoryBtn) {
+      activeCategory = categoryBtn.dataset.category || "All";
+      renderDrills();
+      return;
+    }
 
-function renderAll() {
-  renderPlan();
-  renderDrills();
-  renderMental();
-  renderSC();
-  renderRoster();
-  renderSaved();
-}
+    const mentalBtn = event.target.closest("[data-mental-filter]");
+    if (mentalBtn) {
+      mentalFilter = mentalBtn.dataset.mentalFilter || "All";
+      renderMental();
+      return;
+    }
 
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => switchTab(tab.dataset.tab));
-});
-
-document.querySelectorAll("[data-jump]").forEach(button => {
-  button.addEventListener("click", () => switchTab(button.dataset.jump));
-});
-
-["practiceTitle", "practiceDate", "practiceTeam", "practiceFocus"].forEach(id => {
-  document.getElementById(id).addEventListener("input", updatePracticeDetails);
-});
-
-document.getElementById("drillSearch").addEventListener("input", event => {
-  drillSearch = event.target.value;
-  renderDrills();
-});
-
-document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
-document.getElementById("playerNameInput").addEventListener("keydown", event => {
-  if (event.key === "Enter") addPlayer();
-});
-
-document.getElementById("addCustomBlockBtn").addEventListener("click", openCustomModal);
-document.getElementById("closeCustomBtn").addEventListener("click", closeCustomModal);
-document.getElementById("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
-
-document.getElementById("closeDetailsBtn").addEventListener("click", closeDetails);
-document.getElementById("detailsModal").addEventListener("click", event => {
-  if (event.target.id === "detailsModal") closeDetails();
-});
-
-document.getElementById("customModal").addEventListener("click", event => {
-  if (event.target.id === "customModal") closeCustomModal();
-});
-
-document.getElementById("savePracticeBtn").addEventListener("click", saveCurrentPractice);
-document.getElementById("printPracticeBtn").addEventListener("click", () => {
-  if (typeof printPracticePlan === "function") {
-    printPracticePlan();
-  } else {
-    window.print();
-  }
-});
-
-document.getElementById("backupBtn").addEventListener("click", backupData);
-document.getElementById("restoreBtn").addEventListener("click", restoreData);
-
-document.addEventListener("click", event => {
-    const favoriteClick = event.target.closest("[data-toggle-favorite]");
-
-  if (favoriteClick) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleFavoriteDrill(favoriteClick.dataset.toggleFavorite);
-    return;
-  }
-  const categoryBtn = event.target.closest("[data-category]");
-const mentalBtn = event.target.closest("[data-mental-filter]");
-const toggleFavoriteBtn = event.target.closest("[data-toggle-favorite]");
-const addDrillBtn = event.target.closest("[data-add-drill]");
-  const openDrillBtn = event.target.closest("[data-open-drill]");
-  const addMentalBtn = event.target.closest("[data-add-mental]");
-  const openMentalBtn = event.target.closest("[data-open-mental]");
-  const addSCBtn = event.target.closest("[data-add-sc]");
-  const openSCBtn = event.target.closest("[data-open-sc]");
-  const removeBlockBtn = event.target.closest("[data-remove-block]");
-  const duplicateBlockBtn = event.target.closest("[data-duplicate-block]");
-  const moveUpBtn = event.target.closest("[data-move-up]");
-  const moveDownBtn = event.target.closest("[data-move-down]");
-  const togglePlayerBtn = event.target.closest("[data-toggle-player]");
-  const deletePlayerBtn = event.target.closest("[data-delete-player]");
-  const loadPracticeBtn = event.target.closest("[data-load-practice]");
-  const dupePracticeBtn = event.target.closest("[data-dupe-practice]");
-  const deletePracticeBtn = event.target.closest("[data-delete-practice]");
-  const modalAddBtn = event.target.closest("[data-modal-add]");
-
-  if (categoryBtn) {
-    activeCategory = categoryBtn.dataset.category;
-    renderDrills();
-  }
-
-  if (mentalBtn) {
-    mentalFilter = mentalBtn.dataset.mentalFilter;
-    document.querySelectorAll("[data-mental-filter]").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.mentalFilter === mentalFilter);
-    });
-    renderMental();
-  }
-if (toggleFavoriteBtn) {
-  toggleFavoriteDrill(toggleFavoriteBtn.dataset.toggleFavorite);
-}
-  if (addDrillBtn) {
-    const drill = DRILLS.find(item => item.id === addDrillBtn.dataset.addDrill);
-    if (drill) addBlock(buildBlockFromDrill(drill));
-  }
-
-  if (openDrillBtn) {
-    const drill = DRILLS.find(item => item.id === openDrillBtn.dataset.openDrill);
-    if (drill) openDetails(drill, "drill");
-  }
-
-  if (addMentalBtn) {
-    const item = MENTAL_BLOCKS.find(block => block.id === addMentalBtn.dataset.addMental);
-    if (item) addBlock(buildBlockFromLibrary(item, "mental"));
-  }
-
-  if (openMentalBtn) {
-    const item = MENTAL_BLOCKS.find(block => block.id === openMentalBtn.dataset.openMental);
-    if (item) openDetails(item, "mental");
-  }
-
-  if (addSCBtn) {
-    const item = SC_BLOCKS.find(block => block.id === addSCBtn.dataset.addSc);
-    if (item) addBlock(buildBlockFromLibrary(item, "sc"));
-  }
-
-  if (openSCBtn) {
-    const item = SC_BLOCKS.find(block => block.id === openSCBtn.dataset.openSc);
-    if (item) openDetails(item, "sc");
-  }
-
-  if (removeBlockBtn) {
-    removeBlock(removeBlockBtn.dataset.removeBlock);
-  }
-
-  if (duplicateBlockBtn) {
-    duplicateBlock(duplicateBlockBtn.dataset.duplicateBlock);
-  }
-
-  if (moveUpBtn) {
-    moveBlock(moveUpBtn.dataset.moveUp, -1);
-  }
-
-  if (moveDownBtn) {
-    moveBlock(moveDownBtn.dataset.moveDown, 1);
-  }
-
-  if (togglePlayerBtn) {
-    togglePlayer(togglePlayerBtn.dataset.togglePlayer);
-  }
-
-  if (deletePlayerBtn) {
-    deletePlayer(deletePlayerBtn.dataset.deletePlayer);
-  }
-
-  if (loadPracticeBtn) {
-    loadPractice(loadPracticeBtn.dataset.loadPractice);
-  }
-
-  if (dupePracticeBtn) {
-    duplicatePractice(dupePracticeBtn.dataset.dupePractice);
-  }
-
-  if (deletePracticeBtn) {
-    deletePractice(deletePracticeBtn.dataset.deletePractice);
-  }
-
-  if (modalAddBtn) {
-    const type = modalAddBtn.dataset.modalType;
-    const id = modalAddBtn.dataset.modalAdd;
-
-    if (type === "drill") {
-      const drill = DRILLS.find(item => item.id === id);
+    const addDrillBtn = event.target.closest("[data-add-drill]");
+    if (addDrillBtn) {
+      const drill = DRILLS.find(item => item.id === addDrillBtn.dataset.addDrill);
       if (drill) addBlock(buildBlockFromDrill(drill));
+      return;
     }
 
-    if (type === "mental") {
-      const item = MENTAL_BLOCKS.find(block => block.id === id);
+    const openDrillBtn = event.target.closest("[data-open-drill]");
+    if (openDrillBtn) {
+      const drill = DRILLS.find(item => item.id === openDrillBtn.dataset.openDrill);
+      if (drill) openDetails(drill, "drill");
+      return;
+    }
+
+    const addMentalBtn = event.target.closest("[data-add-mental]");
+    if (addMentalBtn) {
+      const item = MENTAL_BLOCKS.find(block => block.id === addMentalBtn.dataset.addMental);
       if (item) addBlock(buildBlockFromLibrary(item, "mental"));
+      return;
     }
 
-    if (type === "sc") {
-      const item = SC_BLOCKS.find(block => block.id === id);
+    const openMentalBtn = event.target.closest("[data-open-mental]");
+    if (openMentalBtn) {
+      const item = MENTAL_BLOCKS.find(block => block.id === openMentalBtn.dataset.openMental);
+      if (item) openDetails(item, "mental");
+      return;
+    }
+
+    const addSCBtn = event.target.closest("[data-add-sc]");
+    if (addSCBtn) {
+      const item = SC_BLOCKS.find(block => block.id === addSCBtn.dataset.addSc);
       if (item) addBlock(buildBlockFromLibrary(item, "sc"));
+      return;
     }
 
-    closeDetails();
-  }
-});
+    const openSCBtn = event.target.closest("[data-open-sc]");
+    if (openSCBtn) {
+      const item = SC_BLOCKS.find(block => block.id === openSCBtn.dataset.openSc);
+      if (item) openDetails(item, "sc");
+      return;
+    }
 
-document.addEventListener("input", event => {
-  const notesInput = event.target.closest("[data-block-notes]");
-  const minutesInput = event.target.closest("[data-block-minutes]");
+    const removeBlockBtn = event.target.closest("[data-remove-block]");
+    if (removeBlockBtn) {
+      removeBlock(removeBlockBtn.dataset.removeBlock);
+      return;
+    }
 
-  if (notesInput) {
-    updateBlockNotes(notesInput.dataset.blockNotes, notesInput.value);
-  }
+    const duplicateBlockBtn = event.target.closest("[data-duplicate-block]");
+    if (duplicateBlockBtn) {
+      duplicateBlock(duplicateBlockBtn.dataset.duplicateBlock);
+      return;
+    }
 
-  if (minutesInput) {
-    updateBlockMinutes(minutesInput.dataset.blockMinutes, minutesInput.value);
-  }
-});
+    const moveUpBtn = event.target.closest("[data-move-up]");
+    if (moveUpBtn) {
+      moveBlock(moveUpBtn.dataset.moveUp, -1);
+      return;
+    }
+
+    const moveDownBtn = event.target.closest("[data-move-down]");
+    if (moveDownBtn) {
+      moveBlock(moveDownBtn.dataset.moveDown, 1);
+      return;
+    }
+
+    const togglePlayerBtn = event.target.closest("[data-toggle-player]");
+    if (togglePlayerBtn) {
+      togglePlayer(togglePlayerBtn.dataset.togglePlayer);
+      return;
+    }
+
+    const deletePlayerBtn = event.target.closest("[data-delete-player]");
+    if (deletePlayerBtn) {
+      deletePlayer(deletePlayerBtn.dataset.deletePlayer);
+      return;
+    }
+
+    const loadPracticeBtn = event.target.closest("[data-load-practice]");
+    if (loadPracticeBtn) {
+      loadPractice(loadPracticeBtn.dataset.loadPractice);
+      return;
+    }
+
+    const dupePracticeBtn = event.target.closest("[data-dupe-practice]");
+    if (dupePracticeBtn) {
+      duplicatePractice(dupePracticeBtn.dataset.dupePractice);
+      return;
+    }
+
+    const deletePracticeBtn = event.target.closest("[data-delete-practice]");
+    if (deletePracticeBtn) {
+      deletePractice(deletePracticeBtn.dataset.deletePractice);
+      return;
+    }
+
+    const modalAddBtn = event.target.closest("[data-modal-add]");
+    if (modalAddBtn) {
+      const type = modalAddBtn.dataset.modalType;
+      const id = modalAddBtn.dataset.modalAdd;
+
+      if (type === "drill") {
+        const drill = DRILLS.find(item => item.id === id);
+        if (drill) addBlock(buildBlockFromDrill(drill));
+      }
+
+      if (type === "mental") {
+        const item = MENTAL_BLOCKS.find(block => block.id === id);
+        if (item) addBlock(buildBlockFromLibrary(item, "mental"));
+      }
+
+      if (type === "sc") {
+        const item = SC_BLOCKS.find(block => block.id === id);
+        if (item) addBlock(buildBlockFromLibrary(item, "sc"));
+      }
+
+      closeDetails();
+    }
+  });
+}
 
 loadState();
+initEvents();
 switchTab(state.activeTab || "plan");
-renderAll();
