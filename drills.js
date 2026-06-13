@@ -1,0 +1,222 @@
+window.DRILL_DATABASE = [
+  {
+    id: "drill_001",
+    number: "01",
+    category: "Defense",
+    name: "Reading the Hitter",
+    source: "Coach Library",
+    players: "6-12",
+    time: 15,
+    level: "Intermediate",
+    skills: "Blocking, Reading, Defense",
+    purpose: "Train blockers and defenders to read the attacker’s body cues instead of only watching the ball.",
+    setup: "Place a coach or hitter at the net. Blockers start at the net and back-row defenders begin in base defense.",
+    run: [
+      "Coach or hitter attacks to different zones.",
+      "Blockers identify the hitting lane and press over the net.",
+      "Defenders read the attacker and adjust around the block.",
+      "Progress from controlled attacks to live swings."
+    ],
+    coaching: "Teach the eye sequence: ball, setter, hitter approach, hitting arm. Reward correct reads even when the dig is not perfect.",
+    evaluate: "Footwork, timing, block positioning, defensive reads, and hand penetration.",
+    custom: false
+  },
+  {
+    id: "drill_002",
+    number: "02",
+    category: "Serve Receive",
+    name: "Serve & Pass Wash",
+    source: "Coach Library",
+    players: "8-16",
+    time: 20,
+    level: "All levels",
+    skills: "Serving, Passing, Communication",
+    purpose: "Build game-like serve receive reps under pressure.",
+    setup: "Servers line up on one side. Passers set up in serve receive with a target or setter at the net.",
+    run: [
+      "Server delivers a tough in-bounds serve.",
+      "Passers communicate and pass to target.",
+      "Score the pass quality from poor to perfect.",
+      "Rotate servers and passers after each round."
+    ],
+    coaching: "Serve aggressively but keep the ball in. Passers should hold posture, angle the platform, and communicate seams early.",
+    evaluate: "Passing accuracy, serve pressure, seam communication, and consistency.",
+    custom: false
+  },
+  {
+    id: "drill_003",
+    number: "03",
+    category: "Competition",
+    name: "Queen / King of the Court",
+    source: "Coach Library",
+    players: "9-18",
+    time: 20,
+    level: "All levels",
+    skills: "Competing, Communication, All-Around Play",
+    purpose: "Create fast competitive reps with changing teammates and pressure to stay on the court.",
+    setup: "Use teams of 2 or 3. One side is the queen/king side and challengers rotate in from the other side.",
+    run: [
+      "Challengers initiate with a serve, toss, or free ball.",
+      "Winner of the rally moves to or stays on the queen/king side.",
+      "Losing team rotates off.",
+      "Play for time or to a target score."
+    ],
+    coaching: "Keep the pace high. This drill is great for evaluating communication, adaptability, and competitiveness.",
+    evaluate: "Effort, communication, ball control, ability to win points, and teamwork with changing groups.",
+    custom: false
+  },
+  {
+    id: "drill_004",
+    number: "04",
+    category: "Ball Control",
+    name: "Pepper Progression",
+    source: "Coach Library",
+    players: "Pairs",
+    time: 10,
+    level: "Beginner",
+    skills: "Passing, Setting, Controlled Attacking",
+    purpose: "Warm up while building basic ball-control rhythm.",
+    setup: "Pair players 10-15 feet apart with one ball per pair.",
+    run: [
+      "Start with pass-set-catch or pass-set-pass control.",
+      "Progress to dig-set-roll shot.",
+      "Add one-touch pepper for advanced groups.",
+      "Add movement before each contact."
+    ],
+    coaching: "Players should call the ball, face the target, and prioritize control over power.",
+    evaluate: "Platform control, hand setting, communication, and ability to keep the ball alive.",
+    custom: false
+  },
+  {
+    id: "drill_005",
+    number: "05",
+    category: "Setting",
+    name: "Setter Accuracy Test",
+    source: "Coach Library",
+    players: "Individual",
+    time: 10,
+    level: "Intermediate",
+    skills: "Setting, Footwork, Conditioning",
+    purpose: "Evaluate setter accuracy and consistency under movement and fatigue.",
+    setup: "Place setter at the target area with a feeder and a setting target.",
+    run: [
+      "Setter starts low or seated, then moves into position.",
+      "Setter delivers to a target zone.",
+      "Repeat for a timed round or set number of reps.",
+      "Track accurate sets."
+    ],
+    coaching: "Focus on clean hands, balanced feet, and a repeatable release point.",
+    evaluate: "Accuracy, footwork, conditioning, balance, and consistency.",
+    custom: false
+  },
+  {
+    id: "drill_006",
+    number: "06",
+    category: "Serving",
+    name: "Serving Targets / Zones",
+    source: "Coach Library",
+    players: "Any",
+    time: 15,
+    level: "All levels",
+    skills: "Serving, Accuracy, Strategy",
+    purpose: "Improve serving accuracy to specific zones and seams.",
+    setup: "Place targets in deep zones and short seams. Servers begin behind the end line.",
+    run: [
+      "Players serve a set number of balls.",
+      "Award points for hitting called zones.",
+      "Track missed serves separately.",
+      "Add pressure by requiring makes in a row."
+    ],
+    coaching: "Build a consistent toss and routine. Players should serve aggressively without giving away easy errors.",
+    evaluate: "Serve accuracy, consistency, ability to hit zones, and serving under pressure.",
+    custom: false
+  },
+  {
+    id: "drill_007",
+    number: "07",
+    category: "Serve Receive",
+    name: "Triangle Serve Receive",
+    source: "Coach Library",
+    players: "3-6",
+    time: 15,
+    level: "Intermediate",
+    skills: "Passing, Seams, Communication",
+    purpose: "Train three-player serve receive communication and seam responsibility.",
+    setup: "Three passers form a receive triangle. Servers are across the net with a target at the net.",
+    run: [
+      "Serve into seams between passers.",
+      "Passers call early and pass to target.",
+      "Rotate passing positions after each round.",
+      "Increase tempo with multiple servers when ready."
+    ],
+    coaching: "The earliest loud call wins. Define seam rules before the drill starts.",
+    evaluate: "First step, communication, seam ownership, and pass quality.",
+    custom: false
+  },
+  {
+    id: "drill_008",
+    number: "08",
+    category: "Attacking",
+    name: "Approach & Swing Lines",
+    source: "Coach Library",
+    players: "Any",
+    time: 15,
+    level: "All levels",
+    skills: "Hitting, Footwork, Timing",
+    purpose: "Groove approach footwork, timing, and arm swing mechanics.",
+    setup: "Hitters line up at the pin. Coach or setter delivers balls.",
+    run: [
+      "Hitters approach and swing to a called zone.",
+      "Alternate line and cross-court swings.",
+      "Progress from tossed balls to live sets.",
+      "Add targets or a blocker as players improve."
+    ],
+    coaching: "Approach should be late and fast. Emphasize high contact and full arm swing.",
+    evaluate: "Footwork, timing, contact point, shot control, and swing mechanics.",
+    custom: false
+  },
+  {
+    id: "drill_009",
+    number: "09",
+    category: "Team Systems",
+    name: "Coverage & Transition Wash",
+    source: "Coach Library",
+    players: "12+",
+    time: 20,
+    level: "Advanced",
+    skills: "Coverage, Transition, Team Defense",
+    purpose: "Train players to cover hitters and transition quickly from defense to offense.",
+    setup: "Run full 6v6 with coach-entered balls.",
+    run: [
+      "Coach enters a ball to start the rally.",
+      "Team attacks and immediately covers the hitter.",
+      "Continue the rally through transition situations.",
+      "Use wash scoring to reward consecutive execution."
+    ],
+    coaching: "Players must collapse into coverage, then release quickly into transition.",
+    evaluate: "Coverage position, transition speed, team organization, and rally consistency.",
+    custom: false
+  },
+  {
+    id: "drill_010",
+    number: "10",
+    category: "Defense",
+    name: "Defense vs. Live Hitting",
+    source: "Coach Library",
+    players: "6-12",
+    time: 15,
+    level: "Intermediate",
+    skills: "Digging, Defense, Reading",
+    purpose: "Give defenders repeated reps against live or controlled attacks.",
+    setup: "Place hitters or coaches at the net. Defenders start in base positions with a setter target.",
+    run: [
+      "Attack balls to assigned defensive zones.",
+      "Defenders dig to target.",
+      "Rotate defenders through each position.",
+      "Mix in tips and roll shots."
+    ],
+    coaching: "Stop feet before contact, stay low, angle the platform, and pursue every ball.",
+    evaluate: "Defensive reads, platform control, pursuit, and dig-to-target accuracy.",
+    custom: false
+  }
+];
