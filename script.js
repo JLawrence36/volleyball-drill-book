@@ -1009,6 +1009,12 @@ function closeDetails() {
 }
 
 function printPracticePlan() {
+  const oldRoot = document.getElementById("practicePrintRoot");
+  const oldStyle = document.getElementById("practicePrintStyle");
+
+  if (oldRoot) oldRoot.remove();
+  if (oldStyle) oldStyle.remove();
+
   const practice = state.currentPractice || {};
   const blocks = Array.isArray(practice.blocks) ? practice.blocks : [];
 
@@ -1046,9 +1052,10 @@ function printPracticePlan() {
 
               <div>
                 <h2>${escapeHtml(block.title)}</h2>
+
                 <div class="print-meta">
                   <span>${start}–${end} min</span>
-                  <span>${escapeHtml(block.minutes)} min</span>
+                  <span>${escapeHtml(minutes)} min</span>
                   <span>${escapeHtml(block.category || block.type || "Block")}</span>
                 </div>
               </div>
@@ -1092,6 +1099,378 @@ function printPracticePlan() {
         <p>Add drills, mental blocks, S&C blocks, or custom notes before printing.</p>
       </section>
     `;
+
+  const rosterHtml = state.roster.length
+    ? state.roster.map(player => `
+        <div class="print-player ${player.present ? "present" : ""}">
+          <span>${player.present ? "✓" : "□"}</span>
+          ${escapeHtml(player.name)}
+        </div>
+      `).join("")
+    : `<p class="muted">No roster added.</p>`;
+
+  const printRoot = document.createElement("div");
+  printRoot.id = "practicePrintRoot";
+
+  printRoot.innerHTML = `
+    <main class="print-sheet">
+      <div class="print-top-bar">
+        <div>
+          <h1>${escapeHtml(title)}</h1>
+          <div class="print-subtitle">Volleyball Practice Plan</div>
+        </div>
+
+        <div class="print-summary-box">
+          <strong>${total}</strong>
+          <span>Total Minutes</span>
+        </div>
+      </div>
+
+      <div class="print-info-grid">
+        <div class="print-info-card">
+          <span>Date</span>
+          <strong>${escapeHtml(date)}</strong>
+        </div>
+
+        <div class="print-info-card">
+          <span>Team / Group</span>
+          <strong>${escapeHtml(team)}</strong>
+        </div>
+
+        <div class="print-info-card">
+          <span>Practice Focus</span>
+          <strong>${escapeHtml(focus)}</strong>
+        </div>
+      </div>
+
+      ${blocksHtml}
+
+      <section class="print-roster-section">
+        <h2>Attendance</h2>
+        <div class="print-roster-grid">
+          ${rosterHtml}
+        </div>
+      </section>
+
+      <div class="print-footer">
+        Built with Volleyball Practice Planner
+      </div>
+    </main>
+  `;
+
+  const printStyle = document.createElement("style");
+  printStyle.id = "practicePrintStyle";
+
+  printStyle.textContent = `
+    #practicePrintRoot {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: letter;
+        margin: 0.45in;
+      }
+
+      html,
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      body.printing-practice .app-shell {
+        display: none !important;
+      }
+
+      body.printing-practice #practicePrintRoot {
+        display: block !important;
+      }
+
+      body.printing-practice * {
+        box-sizing: border-box;
+      }
+
+      .print-sheet {
+        width: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #14212b;
+        background: white;
+      }
+
+      .print-top-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: start;
+        border-bottom: 5px solid #153b56;
+        padding-bottom: 16px;
+        margin-bottom: 18px;
+      }
+
+      .print-top-bar h1 {
+        margin: 0;
+        font-size: 34px;
+        color: #153b56;
+        line-height: 1.05;
+      }
+
+      .print-subtitle {
+        margin-top: 8px;
+        color: #607080;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .print-summary-box {
+        border: 2px solid #153b56;
+        border-radius: 14px;
+        padding: 12px 14px;
+        text-align: right;
+        min-width: 150px;
+      }
+
+      .print-summary-box strong {
+        display: block;
+        font-size: 30px;
+        color: #153b56;
+      }
+
+      .print-summary-box span {
+        color: #607080;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 900;
+      }
+
+      .print-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .print-info-card {
+        border: 1px solid #d7e0e8;
+        background: #f6f9fb;
+        border-radius: 12px;
+        padding: 10px;
+        min-height: 58px;
+      }
+
+      .print-info-card span {
+        display: block;
+        color: #6f8193;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .print-info-card strong {
+        font-size: 15px;
+        color: #14212b;
+      }
+
+      .print-block {
+        border: 1px solid #d7e0e8;
+        border-left: 8px solid #153b56;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .print-block.mental {
+        border-left-color: #4f5fb8;
+      }
+
+      .print-block.sc {
+        border-left-color: #168995;
+      }
+
+      .print-block.custom {
+        border-left-color: #607d8b;
+      }
+
+      .print-block-head {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .print-block-number {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #153b56;
+        color: white;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        font-size: 20px;
+      }
+
+      .print-block.mental .print-block-number {
+        background: #4f5fb8;
+      }
+
+      .print-block.sc .print-block-number {
+        background: #168995;
+      }
+
+      .print-block.custom .print-block-number {
+        background: #607d8b;
+      }
+
+      .print-block h2 {
+        margin: 0 0 5px;
+        font-size: 21px;
+        color: #14212b;
+      }
+
+      .print-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: #607080;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .print-meta span {
+        background: #edf3f7;
+        border-radius: 999px;
+        padding: 5px 8px;
+      }
+
+      .print-summary {
+        margin: 12px 0 0;
+        color: #304255;
+        line-height: 1.35;
+        font-size: 14px;
+      }
+
+      .print-section {
+        margin-top: 12px;
+        border-top: 1px solid #e4ebf0;
+        padding-top: 10px;
+      }
+
+      .print-section h3 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        color: #153b56;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .print-section p,
+      .print-section li {
+        font-size: 13.5px;
+        line-height: 1.35;
+        color: #304255;
+      }
+
+      .print-section ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .print-notes {
+        background: #fff8ec;
+        border-radius: 10px;
+        border-top: 0;
+        padding: 10px;
+      }
+
+      .print-roster-section {
+        margin-top: 20px;
+        border-top: 4px solid #153b56;
+        padding-top: 14px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .print-roster-section h2 {
+        margin: 0 0 10px;
+        color: #153b56;
+        font-size: 22px;
+      }
+
+      .print-roster-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .print-player {
+        border: 1px solid #d7e0e8;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .print-player span {
+        margin-right: 6px;
+        color: #607080;
+      }
+
+      .print-player.present {
+        background: #f0fdf4;
+        border-color: #86efac;
+      }
+
+      .empty-print {
+        border: 2px dashed #cbd5e1;
+        border-radius: 14px;
+        padding: 28px;
+        text-align: center;
+        color: #607080;
+      }
+
+      .muted {
+        color: #607080;
+      }
+
+      .print-footer {
+        margin-top: 18px;
+        padding-top: 10px;
+        border-top: 1px solid #d7e0e8;
+        color: #8a9aab;
+        font-size: 11px;
+        text-align: center;
+      }
+    }
+  `;
+
+  document.head.appendChild(printStyle);
+  document.body.appendChild(printRoot);
+  document.body.classList.add("printing-practice");
+
+  const cleanup = () => {
+    document.body.classList.remove("printing-practice");
+
+    const root = document.getElementById("practicePrintRoot");
+    const style = document.getElementById("practicePrintStyle");
+
+    if (root) root.remove();
+    if (style) style.remove();
+  };
+
+  window.addEventListener("afterprint", cleanup, { once: true });
+
+  setTimeout(() => {
+    window.print();
+  }, 100);
+
+  setTimeout(cleanup, 15000);
+}
 
   const rosterHtml = state.roster.length
     ? state.roster.map(player => `
