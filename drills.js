@@ -219,4 +219,225 @@ window.DRILL_DATABASE = [
     evaluate: "Defensive reads, platform control, pursuit, and dig-to-target accuracy.",
     custom: false
   }
+,
+  {
+    id: "drill_011",
+    number: "11",
+    category: "Team Systems",
+    name: "Free Ball to Attack",
+    source: "Coach Library",
+    players: "6-12",
+    time: 15,
+    level: "All levels",
+    skills: "Passing, Setting, Hitting, Transition",
+    purpose: "Teach the team to recognize an easy free ball and turn it into an organized attack.",
+    setup: "Coach stands across the net with balls. Receiving team sets up in base or free-ball formation.",
+    run: [
+      "Coach sends a free ball over the net.",
+      "Players call free ball early and pass to the setter area.",
+      "Setter runs the offense and hitters take full approaches.",
+      "Score only clean conversions or kills."
+    ],
+    coaching: "Free balls should become scoring chances. Demand early communication, clean first contact, and aggressive transition footwork.",
+    evaluate: "Free-ball communication, pass quality, setter decision, hitter readiness, and attack conversion.",
+    custom: false
+  },
+  {
+    id: "drill_012",
+    number: "12",
+    category: "Ball Control",
+    name: "Butterfly Drill",
+    source: "Coach Library",
+    players: "6-12",
+    time: 15,
+    level: "Beginner",
+    skills: "Serving, Passing, Setting, Movement",
+    purpose: "Create a continuous serve-pass-set rotation that gives every player repeated contacts.",
+    setup: "Set up serving, passing, setting, and target/shag positions in a rotation loop.",
+    run: [
+      "Player serves and follows the serve to the passing line.",
+      "Passer passes to the setter or target.",
+      "Setter sets to target, then rotates into shag or serve position.",
+      "Keep the pattern moving with minimal stopping."
+    ],
+    coaching: "Keep the pace quick but controlled. Every contact should have a target and purpose.",
+    evaluate: "Serve consistency, passing platform, movement, setting touch, and ability to rotate roles.",
+    custom: false
+  },
+  {
+    id: "drill_013",
+    number: "13",
+    category: "Defense",
+    name: "Middle Blocker Footwork",
+    source: "Coach Library",
+    players: "Any",
+    time: 12,
+    level: "Intermediate",
+    skills: "Blocking, Footwork, Timing",
+    purpose: "Train middle blockers to move laterally, close space, and press over the net.",
+    setup: "Middle blockers start at the net. Coach or hitter is positioned at either pin.",
+    run: [
+      "Middle moves from base to the called side.",
+      "Use shuffle or crossover footwork depending on distance.",
+      "Blocker jumps and presses over the net.",
+      "Alternate left and right sides."
+    ],
+    coaching: "Square the hips before jumping. Hands should press over the net, not just reach straight up.",
+    evaluate: "Footwork, balance, timing, hand penetration, and ability to close to the pin.",
+    custom: false
+  },
+  {
+    id: "drill_014",
+    number: "14",
+    category: "Setting",
+    name: "Setter Transition",
+    source: "Coach Library",
+    players: "2-6",
+    time: 12,
+    level: "Intermediate",
+    skills: "Setting, Transition, Footwork",
+    purpose: "Train the setter to release from base and beat the ball to the target area.",
+    setup: "Setter begins in defensive base. Coach feeds pass-quality balls to different locations.",
+    run: [
+      "Coach feeds a ball that forces setter movement.",
+      "Setter releases to the net or target zone.",
+      "Setter delivers a hittable ball to the pin or middle.",
+      "Vary the feed location and set option."
+    ],
+    coaching: "Setter must move early, arrive balanced, and square to the target before release.",
+    evaluate: "Release speed, footwork, balance, set location, and decision-making.",
+    custom: false
+  },
+  {
+    id: "drill_015",
+    number: "15",
+    category: "Setting",
+    name: "Out-of-System Setting",
+    source: "Coach Library",
+    players: "3-6",
+    time: 12,
+    level: "Advanced",
+    skills: "Setting, Ball Control, Out-of-System Play",
+    purpose: "Practice delivering hittable balls when the first contact pulls the team out of system.",
+    setup: "Use a passer, setter, and hitter. Coach sends difficult balls to force off-target passes.",
+    run: [
+      "Coach sends a tough ball to the passer.",
+      "Setter chases the ball and delivers a high, hittable set.",
+      "Hitter adjusts and attacks safely.",
+      "Rotate passers, setters, and hitters."
+    ],
+    coaching: "When out of system, high to the pin is usually the safest answer. A controlled bump set is acceptable.",
+    evaluate: "Composure, chase footwork, set height, hitter adjustment, and keeping the rally playable.",
+    custom: false
+  },
+  {
+    id: "drill_016",
+    number: "16",
+    category: "Defense",
+    name: "Pursuit / Emergency Defense",
+    source: "Coach Library",
+    players: "4-12",
+    time: 12,
+    level: "Intermediate",
+    skills: "Digging, Pursuit, Effort",
+    purpose: "Build hustle, emergency movement, and the habit of keeping difficult balls alive.",
+    setup: "Coach has balls at the net. Defenders begin in the back court.",
+    run: [
+      "Coach tips, rolls, or drives balls into open space.",
+      "Defenders sprint, sprawl, or run through the ball to keep it alive.",
+      "Add a setter target so the save must be playable.",
+      "Score effort and successful saves."
+    ],
+    coaching: "Players must read early and go now. Reward effort, body control, and balls kept playable.",
+    evaluate: "Pursuit speed, emergency technique, effort, court awareness, and playable saves.",
+    custom: false
+  },
+  {
+    id: "drill_017",
+    number: "17",
+    category: "Team Systems",
+    name: "Serve Receive to Attack",
+    source: "Coach Library",
+    players: "12",
+    time: 20,
+    level: "Advanced",
+    skills: "Passing, Setting, Hitting, Sideout",
+    purpose: "Train first-ball offense from serve receive through a full attack.",
+    setup: "Run 6v6. One side serves and the receiving side runs its serve-receive pattern.",
+    run: [
+      "Server initiates with a tough serve.",
+      "Receiving team passes, sets, and attacks.",
+      "Play the rally out after the first attack.",
+      "Rotate through all six rotations."
+    ],
+    coaching: "A clean pass creates offensive options. Track sideout success by rotation.",
+    evaluate: "Pass quality, first-ball attack, rotation alignment, communication, and sideout efficiency.",
+    custom: false
+  },
+  {
+    id: "drill_018",
+    number: "18",
+    category: "Attacking",
+    name: "Down-Ball Hitting Repetition",
+    source: "Coach Library",
+    players: "Any",
+    time: 12,
+    level: "Beginner",
+    skills: "Hitting, Contact, Shot Control",
+    purpose: "Build clean swing mechanics through high-repetition controlled attacks.",
+    setup: "Hitters line up at the pin or middle. Coach tosses consistent balls.",
+    run: [
+      "Hitter swings at a controlled toss or set.",
+      "Aim to specific target zones.",
+      "Rotate quickly for high reps.",
+      "Progress from standing swings to short approaches."
+    ],
+    coaching: "One cue at a time: high elbow, contact in front, fast arm, controlled finish.",
+    evaluate: "Contact point, arm swing, shot accuracy, consistency, and ability to adjust.",
+    custom: false
+  },
+  {
+    id: "drill_019",
+    number: "19",
+    category: "Defense",
+    name: "Two-Person Defense",
+    source: "Coach Library",
+    players: "Pairs",
+    time: 12,
+    level: "Intermediate",
+    skills: "Defense, Reading, Communication",
+    purpose: "Give two defenders repeated read-and-dig reps while owning the seam between them.",
+    setup: "Two defenders start in the back court. Coach attacks from across the net or from a box.",
+    run: [
+      "Coach attacks at or between the two defenders.",
+      "Defenders call the ball and dig to target.",
+      "Reset to base after each contact.",
+      "Mix hard-driven balls with tips."
+    ],
+    coaching: "Stop before contact and angle the platform to target. Seam communication must be early.",
+    evaluate: "Reading, platform control, recovery, seam ownership, and communication.",
+    custom: false
+  },
+  {
+    id: "drill_020",
+    number: "20",
+    category: "Competition",
+    name: "Serving Under Pressure",
+    source: "Coach Library",
+    players: "Any",
+    time: 10,
+    level: "All levels",
+    skills: "Serving, Mental Toughness, Pressure",
+    purpose: "Train servers to keep their routine and make serves when pressure increases.",
+    setup: "Servers line up behind the end line. Add a visible target or team goal.",
+    run: [
+      "Players must make a set number of serves in a row.",
+      "A miss resets the count.",
+      "Progress from in-bounds serves to called zones.",
+      "Add conditioning before the serve for fatigue pressure."
+    ],
+    coaching: "The routine matters. Breathe, reset, repeat the same toss, and do not rush after a miss.",
+    evaluate: "Serve consistency, composure, target accuracy, and routine under pressure.",
+    custom: false
+  }
 ];
