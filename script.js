@@ -1255,3 +1255,151 @@ function bindEvents() {
 loadState();
 bindEvents();
 switchTab("plan");
+/* HARD FIX — force tabs and missing screens to work */
+function emergencyEnsureScreens() {
+  const main = document.querySelector(".app-main");
+  if (!main) return;
+
+  const screens = {
+    drills: `
+      <div class="section-head">
+        <div>
+          <h2>Drill Library</h2>
+          <p>Browse by category, favorite drills, or search by skill.</p>
+        </div>
+        <span id="drillCountBadge" class="count-badge">0 drills</span>
+      </div>
+      <div class="search-card">
+        <input id="drillSearch" type="search" placeholder="Search serve, defense, setter, 15 min..." />
+      </div>
+      <div id="categoryChips" class="chip-row"></div>
+      <div id="drillLibrary" class="library-list"></div>
+    `,
+    mental: `
+      <div class="section-head">
+        <div>
+          <h2>Mental Training</h2>
+          <p>Quick reset tools, confidence routines, and pressure training blocks.</p>
+        </div>
+      </div>
+      <div class="chip-row">
+        <button class="chip active" data-mental-filter="All">All</button>
+        <button class="chip" data-mental-filter="Reset">Reset</button>
+        <button class="chip" data-mental-filter="Pressure">Pressure</button>
+        <button class="chip" data-mental-filter="Confidence">Confidence</button>
+        <button class="chip" data-mental-filter="Team">Team</button>
+      </div>
+      <div id="mentalLibrary" class="library-list"></div>
+    `,
+    sc: `
+      <div class="section-head">
+        <div>
+          <h2>Strength & Conditioning</h2>
+          <p>Warmups, agility, speed, vertical work, shoulder care, and cooldowns.</p>
+        </div>
+      </div>
+      <div id="scLibrary" class="library-list"></div>
+    `,
+    roster: `
+      <div class="section-head">
+        <div>
+          <h2>Roster & Attendance</h2>
+          <p>Add players once, then tap names to mark present.</p>
+        </div>
+      </div>
+      <div class="roster-add">
+        <input id="playerNameInput" type="text" placeholder="Add player name..." />
+        <button id="addPlayerBtn" class="btn dark">＋ Add</button>
+      </div>
+      <div id="rosterList" class="roster-list"></div>
+      <div id="emptyRoster" class="empty-card small">
+        <div class="empty-icon">👥</div>
+        <p>Add your players once and they’ll be here every session.</p>
+      </div>
+    `,
+    saved: `
+      <div class="section-head">
+        <div>
+          <h2>Saved Practices</h2>
+          <p>Reload, tweak, print, or duplicate previous practices.</p>
+        </div>
+      </div>
+      <div id="savedList" class="saved-list"></div>
+      <div id="emptySaved" class="empty-card small">
+        <div class="empty-icon">📁</div>
+        <p>Plans you save show up here.</p>
+      </div>
+      <div class="backup-card">
+        <h3>Data & Backup</h3>
+        <button id="backupBtn" class="btn outline full">Check my saved data</button>
+        <label class="backup-label">Restore from a backup</label>
+        <textarea id="restoreText" placeholder="Paste backup text here..."></textarea>
+        <button id="restoreBtn" class="btn dark full">Restore backup</button>
+      </div>
+    `
+  };
+
+  Object.entries(screens).forEach(([id, html]) => {
+    let screen = document.getElementById(id);
+
+    if (!screen) {
+      screen = document.createElement("section");
+      screen.id = id;
+      screen.className = "screen";
+      main.appendChild(screen);
+    }
+
+    if (!screen.innerHTML.trim()) {
+      screen.innerHTML = html;
+    }
+  });
+}
+
+function emergencySwitchTab(tabName) {
+  emergencyEnsureScreens();
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.tab === tabName);
+  });
+
+  document.querySelectorAll(".screen").forEach(screen => {
+    const active = screen.id === tabName;
+    screen.classList.toggle("active", active);
+    screen.style.display = active ? "block" : "none";
+    screen.style.visibility = active ? "visible" : "hidden";
+    screen.style.opacity = active ? "1" : "0";
+  });
+
+  try {
+    if (tabName === "plan") renderPlan();
+    if (tabName === "drills") renderDrills();
+    if (tabName === "mental") renderMental();
+    if (tabName === "sc") renderSC();
+    if (tabName === "roster") renderRoster();
+    if (tabName === "saved") renderSaved();
+  } catch (err) {
+    console.error("Render error:", err);
+  }
+}
+
+document.addEventListener("click", function (event) {
+  const tab = event.target.closest("[data-tab]");
+  const jump = event.target.closest("[data-jump]");
+
+  if (tab) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    emergencySwitchTab(tab.dataset.tab);
+  }
+
+  if (jump) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    emergencySwitchTab(jump.dataset.jump);
+  }
+}, true);
+
+setTimeout(() => {
+  emergencyEnsureScreens();
+  emergencySwitchTab("plan");
+}, 250);
