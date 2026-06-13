@@ -1349,7 +1349,13 @@ document.getElementById("customModal").addEventListener("click", event => {
 });
 
 document.getElementById("savePracticeBtn").addEventListener("click", saveCurrentPractice);
-document.getElementById("printPracticeBtn").addEventListener("click", printPracticePlan);
+document.getElementById("printPracticeBtn").addEventListener("click", () => {
+  if (typeof printPracticePlan === "function") {
+    printPracticePlan();
+  } else {
+    window.print();
+  }
+});
 
 document.getElementById("backupBtn").addEventListener("click", backupData);
 document.getElementById("restoreBtn").addEventListener("click", restoreData);
