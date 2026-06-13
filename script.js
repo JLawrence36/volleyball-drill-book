@@ -1,4 +1,4 @@
-const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V3";
+const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V4";
 
 const DRILLS = Array.isArray(window.DRILL_DATABASE) ? window.DRILL_DATABASE : [];
 
@@ -21,7 +21,7 @@ const MENTAL_BLOCKS = [
     title: "Breath Reset",
     minutes: 5,
     summary: "Quick reset players can use between points.",
-    details: ["Inhale for 4.", "Hold for 2.", "Exhale for 4.", "Say one cue word."],
+    details: ["Inhale for 4 counts.", "Hold for 2 counts.", "Exhale for 4 counts.", "Say one cue word."],
     coaching: "Use this after mistakes, missed serves, or pressure points."
   },
   {
@@ -48,7 +48,7 @@ const MENTAL_BLOCKS = [
     title: "Cue Words",
     minutes: 6,
     summary: "Give players simple words to use under pressure.",
-    details: ["Pick one cue word.", "Use it before pressure reps.", "Use it after mistakes.", "Repeat it during serve receive."],
+    details: ["Pick one cue word.", "Use it before pressure reps.", "Use it after mistakes.", "Use it during serve receive."],
     coaching: "Examples: tall, calm, attack, platform, next."
   },
   {
@@ -219,7 +219,6 @@ const PRACTICE_TEMPLATES = [
 ];
 
 let state = defaultState();
-let activeTab = "plan";
 let activeCategory = "All";
 let drillSearch = "";
 let mentalFilter = "All";
@@ -233,6 +232,9 @@ function $all(selector) {
 }
 
 function makeId(prefix) {
+  if (window.crypto && window.crypto.randomUUID) {
+    return `${prefix}_${window.crypto.randomUUID()}`;
+  }
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 }
 
@@ -242,6 +244,7 @@ function today() {
 
 function defaultState() {
   return {
+    activeTab: "plan",
     currentPractice: {
       id: makeId("practice"),
       title: "",
@@ -272,16 +275,16 @@ function saveState() {
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
-
   if (!saved) return;
 
   try {
     const parsed = JSON.parse(saved);
+    const fresh = defaultState();
     state = {
-      ...defaultState(),
+      ...fresh,
       ...parsed,
       currentPractice: {
-        ...defaultState().currentPractice,
+        ...fresh.currentPractice,
         ...(parsed.currentPractice || {})
       }
     };
@@ -289,23 +292,29 @@ function loadState() {
     state = defaultState();
   }
 
+  if (!state.currentPractice) state.currentPractice = defaultState().currentPractice;
   if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
   if (!Array.isArray(state.roster)) state.roster = [];
   if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
   if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
+  if (!state.currentPractice.date) state.currentPractice.date = today();
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  try {
+    return new Date(value + "T00:00:00").toLocaleDateString();
+  } catch {
+    return value;
+  }
 }
 
 function totalMinutes() {
   return state.currentPractice.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
 }
 
-function formatDate(value) {
-  if (!value) return "";
-  return new Date(value + "T00:00:00").toLocaleDateString();
-}
-
 function switchTab(tabName) {
-  activeTab = tabName;
+  state.activeTab = tabName;
 
   $all(".tab").forEach(tab => {
     tab.classList.toggle("active", tab.dataset.tab === tabName);
@@ -315,7 +324,12 @@ function switchTab(tabName) {
     screen.classList.toggle("active", screen.id === tabName);
   });
 
+  saveState();
   renderAll();
+}
+
+function findDrillById(id) {
+  return DRILLS.find(drill => drill.id === id);
 }
 
 function findDrillByNumber(number) {
@@ -323,15 +337,13 @@ function findDrillByNumber(number) {
   return DRILLS.find(drill => String(drill.number).padStart(2, "0") === clean);
 }
 
-function findDrillById(id) {
-  return DRILLS.find(drill => drill.id === id);
-}
-
 function isFavoriteDrill(id) {
   return state.favoriteDrills.includes(id);
 }
 
 function toggleFavorite(id) {
+  if (!id) return;
+
   if (isFavoriteDrill(id)) {
     state.favoriteDrills = state.favoriteDrills.filter(item => item !== id);
   } else {
@@ -447,7 +459,6 @@ function saveCurrentPractice() {
   practice.updatedAt = new Date().toISOString();
 
   const index = state.savedPractices.findIndex(item => item.id === practice.id);
-
   if (index >= 0) {
     state.savedPractices[index] = practice;
   } else {
@@ -485,7 +496,6 @@ function duplicatePractice(id) {
 
 function deletePractice(id) {
   if (!confirm("Delete this saved practice?")) return;
-
   state.savedPractices = state.savedPractices.filter(item => item.id !== id);
   saveState();
   renderSaved();
@@ -495,7 +505,6 @@ function buildTemplateBlock(item) {
   if (item.type === "drill") {
     const drill = findDrillByNumber(item.number);
     if (!drill) return null;
-
     const block = buildBlockFromDrill(drill);
     block.minutes = item.minutes || block.minutes;
     return block;
@@ -504,7 +513,6 @@ function buildTemplateBlock(item) {
   if (item.type === "mental") {
     const mental = MENTAL_BLOCKS.find(block => block.id === item.id);
     if (!mental) return null;
-
     const block = buildLibraryBlock(mental, "mental");
     block.minutes = item.minutes || block.minutes;
     return block;
@@ -513,7 +521,6 @@ function buildTemplateBlock(item) {
   if (item.type === "sc") {
     const sc = SC_BLOCKS.find(block => block.id === item.id);
     if (!sc) return null;
-
     const block = buildLibraryBlock(sc, "sc");
     block.minutes = item.minutes || block.minutes;
     return block;
@@ -535,14 +542,12 @@ function loadTemplate(id) {
     if (!replace) return;
   }
 
-  const blocks = template.blocks.map(buildTemplateBlock).filter(Boolean);
-
   state.currentPractice = {
     ...state.currentPractice,
     id: makeId("practice"),
     title: template.title,
     focus: template.focus,
-    blocks
+    blocks: template.blocks.map(buildTemplateBlock).filter(Boolean)
   };
 
   saveState();
@@ -614,20 +619,11 @@ function renderPlan() {
 function renderCategories() {
   if (!$("categoryChips")) return;
 
-  const categories = ["All", "Favorites", ...CATEGORY_ORDER.filter(category => {
-    return DRILLS.some(drill => drill.category === category);
-  })];
+  const categories = ["All", "Favorites", ...CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category))];
 
   $("categoryChips").innerHTML = categories.map(category => {
-    const label = category === "Favorites"
-      ? `★ Favorites (${state.favoriteDrills.length})`
-      : category;
-
-    return `
-      <button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">
-        ${escapeHtml(label)}
-      </button>
-    `;
+    const label = category === "Favorites" ? `★ Favorites (${state.favoriteDrills.length})` : category;
+    return `<button class="chip ${activeCategory === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(label)}</button>`;
   }).join("");
 }
 
@@ -667,7 +663,6 @@ function sortedDrills() {
     const cb = CATEGORY_ORDER.indexOf(b.category);
     const safeA = ca === -1 ? 999 : ca;
     const safeB = cb === -1 ? 999 : cb;
-
     if (safeA !== safeB) return safeA - safeB;
     return Number(a.number || 0) - Number(b.number || 0);
   });
@@ -702,16 +697,9 @@ function filteredDrills() {
 }
 
 function renderCategoryCards() {
-  const categories = CATEGORY_ORDER.filter(category => {
-    return DRILLS.some(drill => drill.category === category);
-  });
-
+  const categories = CATEGORY_ORDER.filter(category => DRILLS.some(drill => drill.category === category));
   const cards = [
-    {
-      category: "Favorites",
-      count: state.favoriteDrills.length,
-      locked: state.favoriteDrills.length === 0
-    },
+    { category: "Favorites", count: state.favoriteDrills.length, locked: state.favoriteDrills.length === 0 },
     ...categories.map(category => ({
       category,
       count: DRILLS.filter(drill => drill.category === category).length,
@@ -761,11 +749,9 @@ function renderDrills() {
     return;
   }
 
-  let html = "";
-
-  if (activeCategory !== "All") {
-    html += `<button class="back-card" data-category="All">← Back to drill categories</button>`;
-  }
+  let html = activeCategory !== "All"
+    ? `<button class="back-card" data-category="All">← Back to drill categories</button>`
+    : "";
 
   let lastCategory = "";
 
@@ -927,24 +913,11 @@ function renderAll() {
 
 function openTemplateModal() {
   renderTemplates();
-
-  if ($("templateModal")) {
-    $("templateModal").classList.remove("hidden");
-  } else {
-    const names = PRACTICE_TEMPLATES.map((t, i) => `${i + 1}. ${t.title}`).join("\n");
-    const pick = prompt(`Choose a template:\n\n${names}`);
-    const index = Number(pick) - 1;
-
-    if (PRACTICE_TEMPLATES[index]) {
-      loadTemplate(PRACTICE_TEMPLATES[index].id);
-    }
-  }
+  $("templateModal").classList.remove("hidden");
 }
 
 function closeTemplateModal() {
-  if ($("templateModal")) {
-    $("templateModal").classList.add("hidden");
-  }
+  if ($("templateModal")) $("templateModal").classList.add("hidden");
 }
 
 function openCustomModal() {
@@ -955,7 +928,7 @@ function openCustomModal() {
 }
 
 function closeCustomModal() {
-  $("customModal").classList.add("hidden");
+  if ($("customModal")) $("customModal").classList.add("hidden");
 }
 
 function saveCustomBlock() {
@@ -976,12 +949,7 @@ function addPlayer() {
   const name = $("playerNameInput").value.trim();
   if (!name) return;
 
-  state.roster.push({
-    id: makeId("player"),
-    name,
-    present: false
-  });
-
+  state.roster.push({ id: makeId("player"), name, present: false });
   $("playerNameInput").value = "";
   saveState();
   renderRoster();
@@ -990,7 +958,6 @@ function addPlayer() {
 function togglePlayer(id) {
   const player = state.roster.find(item => item.id === id);
   if (!player) return;
-
   player.present = !player.present;
   saveState();
   renderRoster();
@@ -1006,10 +973,7 @@ function openDetails(item, type) {
   if (!$("detailsModal") || !$("detailsContent")) return;
 
   const title = type === "drill" ? `${item.number}. ${item.name}` : item.title;
-  const meta = type === "drill"
-    ? `${item.category} · ${item.time} min · ${item.players}`
-    : `${item.category} · ${item.minutes} min`;
-
+  const meta = type === "drill" ? `${item.category} · ${item.time} min · ${item.players}` : `${item.category} · ${item.minutes} min`;
   const summary = type === "drill" ? item.purpose : item.summary;
   const details = type === "drill" ? item.run : item.details;
   const coaching = item.coaching || "";
@@ -1041,7 +1005,7 @@ function openDetails(item, type) {
 }
 
 function closeDetails() {
-  $("detailsModal").classList.add("hidden");
+  if ($("detailsModal")) $("detailsModal").classList.add("hidden");
 }
 
 function printPracticePlan() {
@@ -1057,10 +1021,13 @@ function restoreData() {
   if (!raw) return;
 
   try {
-    state = {
-      ...defaultState(),
-      ...JSON.parse(raw)
-    };
+    const parsed = JSON.parse(raw);
+    state = { ...defaultState(), ...parsed };
+
+    if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
+    if (!Array.isArray(state.roster)) state.roster = [];
+    if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
+    if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
 
     saveState();
     renderAll();
@@ -1078,7 +1045,7 @@ function bindEvents() {
     const jump = event.target.closest("[data-jump]");
     if (jump) return switchTab(jump.dataset.jump);
 
-    const templateOpen = event.target.closest("#openTemplatesBtn");
+    const templateOpen = event.target.closest("#openTemplatesBtn, #openTemplatesBtnEmpty");
     if (templateOpen) return openTemplateModal();
 
     const templateClose = event.target.closest("#closeTemplateBtn");
@@ -1174,7 +1141,7 @@ function bindEvents() {
     const duplicate = event.target.closest("[data-duplicate-block]");
     if (duplicate) return duplicateBlock(duplicate.dataset.duplicateBlock);
 
-    const customOpen = event.target.closest("#addCustomBlockBtn");
+    const customOpen = event.target.closest("#addCustomBlockBtn, #addCustomBlockBtnEmpty");
     if (customOpen) return openCustomModal();
 
     const customClose = event.target.closest("#closeCustomBtn");
@@ -1249,157 +1216,30 @@ function bindEvents() {
     if (event.key === "Enter" && event.target.matches("#playerNameInput")) {
       addPlayer();
     }
-  });
-}
 
-loadState();
-bindEvents();
-switchTab("plan");
-/* HARD FIX — force tabs and missing screens to work */
-function emergencyEnsureScreens() {
-  const main = document.querySelector(".app-main");
-  if (!main) return;
-
-  const screens = {
-    drills: `
-      <div class="section-head">
-        <div>
-          <h2>Drill Library</h2>
-          <p>Browse by category, favorite drills, or search by skill.</p>
-        </div>
-        <span id="drillCountBadge" class="count-badge">0 drills</span>
-      </div>
-      <div class="search-card">
-        <input id="drillSearch" type="search" placeholder="Search serve, defense, setter, 15 min..." />
-      </div>
-      <div id="categoryChips" class="chip-row"></div>
-      <div id="drillLibrary" class="library-list"></div>
-    `,
-    mental: `
-      <div class="section-head">
-        <div>
-          <h2>Mental Training</h2>
-          <p>Quick reset tools, confidence routines, and pressure training blocks.</p>
-        </div>
-      </div>
-      <div class="chip-row">
-        <button class="chip active" data-mental-filter="All">All</button>
-        <button class="chip" data-mental-filter="Reset">Reset</button>
-        <button class="chip" data-mental-filter="Pressure">Pressure</button>
-        <button class="chip" data-mental-filter="Confidence">Confidence</button>
-        <button class="chip" data-mental-filter="Team">Team</button>
-      </div>
-      <div id="mentalLibrary" class="library-list"></div>
-    `,
-    sc: `
-      <div class="section-head">
-        <div>
-          <h2>Strength & Conditioning</h2>
-          <p>Warmups, agility, speed, vertical work, shoulder care, and cooldowns.</p>
-        </div>
-      </div>
-      <div id="scLibrary" class="library-list"></div>
-    `,
-    roster: `
-      <div class="section-head">
-        <div>
-          <h2>Roster & Attendance</h2>
-          <p>Add players once, then tap names to mark present.</p>
-        </div>
-      </div>
-      <div class="roster-add">
-        <input id="playerNameInput" type="text" placeholder="Add player name..." />
-        <button id="addPlayerBtn" class="btn dark">＋ Add</button>
-      </div>
-      <div id="rosterList" class="roster-list"></div>
-      <div id="emptyRoster" class="empty-card small">
-        <div class="empty-icon">👥</div>
-        <p>Add your players once and they’ll be here every session.</p>
-      </div>
-    `,
-    saved: `
-      <div class="section-head">
-        <div>
-          <h2>Saved Practices</h2>
-          <p>Reload, tweak, print, or duplicate previous practices.</p>
-        </div>
-      </div>
-      <div id="savedList" class="saved-list"></div>
-      <div id="emptySaved" class="empty-card small">
-        <div class="empty-icon">📁</div>
-        <p>Plans you save show up here.</p>
-      </div>
-      <div class="backup-card">
-        <h3>Data & Backup</h3>
-        <button id="backupBtn" class="btn outline full">Check my saved data</button>
-        <label class="backup-label">Restore from a backup</label>
-        <textarea id="restoreText" placeholder="Paste backup text here..."></textarea>
-        <button id="restoreBtn" class="btn dark full">Restore backup</button>
-      </div>
-    `
-  };
-
-  Object.entries(screens).forEach(([id, html]) => {
-    let screen = document.getElementById(id);
-
-    if (!screen) {
-      screen = document.createElement("section");
-      screen.id = id;
-      screen.className = "screen";
-      main.appendChild(screen);
-    }
-
-    if (!screen.innerHTML.trim()) {
-      screen.innerHTML = html;
+    if (event.key === "Escape") {
+      closeTemplateModal();
+      closeCustomModal();
+      closeDetails();
     }
   });
+
+  document.addEventListener("click", event => {
+    if (event.target.id === "templateModal") closeTemplateModal();
+    if (event.target.id === "customModal") closeCustomModal();
+    if (event.target.id === "detailsModal") closeDetails();
+  });
 }
 
-function emergencySwitchTab(tabName) {
-  emergencyEnsureScreens();
-
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.classList.toggle("active", tab.dataset.tab === tabName);
-  });
-
-  document.querySelectorAll(".screen").forEach(screen => {
-    const active = screen.id === tabName;
-    screen.classList.toggle("active", active);
-    screen.style.display = active ? "block" : "none";
-    screen.style.visibility = active ? "visible" : "hidden";
-    screen.style.opacity = active ? "1" : "0";
-  });
-
-  try {
-    if (tabName === "plan") renderPlan();
-    if (tabName === "drills") renderDrills();
-    if (tabName === "mental") renderMental();
-    if (tabName === "sc") renderSC();
-    if (tabName === "roster") renderRoster();
-    if (tabName === "saved") renderSaved();
-  } catch (err) {
-    console.error("Render error:", err);
-  }
+function initApp() {
+  loadState();
+  bindEvents();
+  renderAll();
+  switchTab(state.activeTab || "plan");
 }
 
-document.addEventListener("click", function (event) {
-  const tab = event.target.closest("[data-tab]");
-  const jump = event.target.closest("[data-jump]");
-
-  if (tab) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    emergencySwitchTab(tab.dataset.tab);
-  }
-
-  if (jump) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    emergencySwitchTab(jump.dataset.jump);
-  }
-}, true);
-
-setTimeout(() => {
-  emergencyEnsureScreens();
-  emergencySwitchTab("plan");
-}, 250);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
