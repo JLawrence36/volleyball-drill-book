@@ -187,7 +187,95 @@ const SC_BLOCKS = [
     coaching: "Cooldown is a good time to reinforce the practice message."
   }
 ];
-
+const PRACTICE_TEMPLATES = [
+  {
+    id: "template_90",
+    title: "90-Minute Complete Practice",
+    focus: "Full team practice: warmup, ball control, serve receive, attacking, and 6v6.",
+    blocks: [
+      { type: "sc", id: "sc_01", minutes: 10 },
+      { type: "drill", number: "12", minutes: 15 },
+      { type: "drill", number: "02", minutes: 15 },
+      { type: "drill", number: "14", minutes: 12 },
+      { type: "drill", number: "08", minutes: 15 },
+      { type: "drill", number: "53", minutes: 18 },
+      { type: "custom", title: "Team Talk / Wrap-Up", category: "Custom", minutes: 5, summary: "Review one win, one correction, and the next practice focus." }
+    ]
+  },
+  {
+    id: "template_tryout",
+    title: "Tryout Evaluation Practice",
+    focus: "Evaluate serving, passing, setting, attacking, defense, effort, and communication.",
+    blocks: [
+      { type: "sc", id: "sc_01", minutes: 10 },
+      { type: "drill", number: "12", minutes: 10 },
+      { type: "drill", number: "06", minutes: 10 },
+      { type: "drill", number: "29", minutes: 10 },
+      { type: "drill", number: "05", minutes: 8 },
+      { type: "drill", number: "62", minutes: 12 },
+      { type: "drill", number: "19", minutes: 10 },
+      { type: "drill", number: "80", minutes: 20 }
+    ]
+  },
+  {
+    id: "template_serving",
+    title: "Serving Focus Practice",
+    focus: "Serving accuracy, pressure serving, short serves, and serve-to-score mentality.",
+    blocks: [
+      { type: "sc", id: "sc_01", minutes: 8 },
+      { type: "mental", id: "mental_02", minutes: 5 },
+      { type: "drill", number: "06", minutes: 15 },
+      { type: "drill", number: "20", minutes: 12 },
+      { type: "drill", number: "25", minutes: 12 },
+      { type: "drill", number: "26", minutes: 12 },
+      { type: "drill", number: "68", minutes: 12 },
+      { type: "drill", number: "02", minutes: 15 }
+    ]
+  },
+  {
+    id: "template_defense",
+    title: "Defense Focus Practice",
+    focus: "Reading hitters, digging to target, pursuit, and team defense.",
+    blocks: [
+      { type: "sc", id: "sc_02", minutes: 10 },
+      { type: "drill", number: "01", minutes: 15 },
+      { type: "drill", number: "10", minutes: 15 },
+      { type: "drill", number: "16", minutes: 12 },
+      { type: "drill", number: "43", minutes: 15 },
+      { type: "drill", number: "65", minutes: 15 },
+      { type: "drill", number: "76", minutes: 12 }
+    ]
+  },
+  {
+    id: "template_game_prep",
+    title: "Game Prep Practice",
+    focus: "Serve receive, sideout, transition, pressure points, and match readiness.",
+    blocks: [
+      { type: "sc", id: "sc_01", minutes: 8 },
+      { type: "drill", number: "17", minutes: 18 },
+      { type: "drill", number: "23", minutes: 18 },
+      { type: "drill", number: "53", minutes: 20 },
+      { type: "mental", id: "mental_06", minutes: 8 },
+      { type: "drill", number: "79", minutes: 15 },
+      { type: "custom", title: "Serve Receive Rotation Review", category: "Custom", minutes: 5, summary: "Review rotations, seams, and game plan reminders." }
+    ]
+  },
+  {
+    id: "template_light",
+    title: "Light Pre-Match Practice",
+    focus: "Light movement, touch, confidence, serving rhythm, and clean team energy.",
+    blocks: [
+      { type: "sc", id: "sc_01", minutes: 8 },
+      { type: "drill", number: "04", minutes: 8 },
+      { type: "drill", number: "12", minutes: 10 },
+      { type: "drill", number: "06", minutes: 10 },
+      { type: "drill", number: "11", minutes: 10 },
+      { type: "drill", number: "74", minutes: 10 },
+      { type: "mental", id: "mental_01", minutes: 4 },
+      { type: "sc", id: "sc_06", minutes: 5 }
+    ]
+  }
+];
 let drillSearch = "";
 let activeCategory = "All";
 let mentalFilter = "All";
@@ -551,7 +639,149 @@ function deletePlayer(id) {
   saveState();
   renderRoster();
 }
+function findDrillByNumber(number) {
+  const cleanNumber = String(number).padStart(2, "0");
+  return DRILLS.find(drill => String(drill.number).padStart(2, "0") === cleanNumber);
+}
 
+function buildTemplateBlock(templateBlock) {
+  if (templateBlock.type === "drill") {
+    const drill = findDrillByNumber(templateBlock.number);
+    if (!drill) return null;
+
+    const block = buildBlockFromDrill(drill);
+    block.minutes = Number(templateBlock.minutes) || block.minutes;
+    return block;
+  }
+
+  if (templateBlock.type === "mental") {
+    const item = MENTAL_BLOCKS.find(block => block.id === templateBlock.id);
+    if (!item) return null;
+
+    const block = buildBlockFromLibrary(item, "mental");
+    block.minutes = Number(templateBlock.minutes) || block.minutes;
+    return block;
+  }
+
+  if (templateBlock.type === "sc") {
+    const item = SC_BLOCKS.find(block => block.id === templateBlock.id);
+    if (!item) return null;
+
+    const block = buildBlockFromLibrary(item, "sc");
+    block.minutes = Number(templateBlock.minutes) || block.minutes;
+    return block;
+  }
+
+  if (templateBlock.type === "custom") {
+    return {
+      id: makeId("block"),
+      type: "custom",
+      title: templateBlock.title || "Custom Block",
+      category: templateBlock.category || "Custom",
+      minutes: Number(templateBlock.minutes) || 5,
+      summary: templateBlock.summary || "",
+      details: [],
+      coaching: "",
+      evaluate: "",
+      notes: templateBlock.summary || "",
+      sourceId: ""
+    };
+  }
+
+  return null;
+}
+
+function templateMinutes(template) {
+  return template.blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
+}
+
+function renderTemplates() {
+  const list = $("templateList");
+
+  list.innerHTML = PRACTICE_TEMPLATES.map(template => {
+    const minutes = templateMinutes(template);
+
+    const blockPreview = template.blocks.map(block => {
+      if (block.type === "drill") {
+        const drill = findDrillByNumber(block.number);
+        return drill ? drill.name : `Drill ${block.number}`;
+      }
+
+      if (block.type === "mental") {
+        const item = MENTAL_BLOCKS.find(mental => mental.id === block.id);
+        return item ? item.title : "Mental Block";
+      }
+
+      if (block.type === "sc") {
+        const item = SC_BLOCKS.find(sc => sc.id === block.id);
+        return item ? item.title : "S&C Block";
+      }
+
+      return block.title || "Custom Block";
+    }).join(" · ");
+
+    return `
+      <div class="library-card template-card">
+        <div>
+          <h3>${escapeHtml(template.title)}</h3>
+          <p>${escapeHtml(template.focus)}</p>
+
+          <div class="card-meta">
+            ${minutes} min · ${template.blocks.length} blocks
+          </div>
+
+          <div class="template-preview">
+            ${escapeHtml(blockPreview)}
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button 
+            type="button" 
+            class="icon-btn" 
+            data-load-template="${escapeHtml(template.id)}"
+            title="Load template"
+          >⚡</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function openTemplateModal() {
+  renderTemplates();
+  $("templateModal").classList.remove("hidden");
+}
+
+function closeTemplateModal() {
+  $("templateModal").classList.add("hidden");
+}
+
+function loadTemplate(templateId) {
+  const template = PRACTICE_TEMPLATES.find(item => item.id === templateId);
+  if (!template) return;
+
+  if (state.currentPractice.blocks.length > 0) {
+    const replace = confirm("Load this template and replace the current practice blocks?");
+    if (!replace) return;
+  }
+
+  const blocks = template.blocks
+    .map(buildTemplateBlock)
+    .filter(Boolean);
+
+  state.currentPractice = {
+    ...state.currentPractice,
+    id: makeId("practice"),
+    title: template.title,
+    focus: template.focus,
+    blocks
+  };
+
+  saveState();
+  closeTemplateModal();
+  switchTab("plan");
+}
 function openCustomModal() {
   $("customTitle").value = "";
   $("customMinutes").value = "";
@@ -1576,7 +1806,12 @@ function initEvents() {
   $("playerNameInput").addEventListener("keydown", event => {
     if (event.key === "Enter") addPlayer();
   });
+$("openTemplatesBtn").addEventListener("click", openTemplateModal);
+$("closeTemplateBtn").addEventListener("click", closeTemplateModal);
 
+$("templateModal").addEventListener("click", event => {
+  if (event.target.id === "templateModal") closeTemplateModal();
+});
   $("addCustomBlockBtn").addEventListener("click", openCustomModal);
   $("closeCustomBtn").addEventListener("click", closeCustomModal);
   $("saveCustomBlockBtn").addEventListener("click", saveCustomBlock);
@@ -1616,7 +1851,13 @@ function initEvents() {
       updateBlockMinutes(minutesInput.dataset.blockMinutes, minutesInput.value);
     }
   });
-
+const templateBtn = event.target.closest("[data-load-template]");
+if (templateBtn) {
+  event.preventDefault();
+  event.stopPropagation();
+  loadTemplate(templateBtn.dataset.loadTemplate);
+  return;
+}
   document.addEventListener("click", event => {
     const favoriteBtn = event.target.closest("[data-toggle-favorite]");
     if (favoriteBtn) {
