@@ -13,6 +13,7 @@
     <header class="app-header">
       <div class="brand-row">
         <div class="brand-icon">🏐</div>
+
         <div>
           <h1>Practice Planner</h1>
           <p>Build it, time it, run it.</p>
@@ -70,11 +71,29 @@
           </div>
         </div>
 
+        <div class="team-manager-card">
+          <div class="team-manager-head">
+            <div>
+              <span>Active Team</span>
+              <strong id="activeTeamLabel">Default Team</strong>
+            </div>
+          </div>
+
+          <div class="team-manager-controls">
+            <select id="teamSelect"></select>
+            <button class="btn dark" id="addTeamBtn">＋ Add Team</button>
+            <button class="btn light" id="renameTeamBtn">Rename</button>
+            <button class="btn outline" id="deleteTeamBtn">Delete</button>
+          </div>
+        </div>
+
         <div id="planList" class="plan-list"></div>
 
         <div id="emptyPlan" class="empty-card">
           <div class="empty-icon">🏐</div>
+
           <h2>No blocks yet</h2>
+
           <p>Add drills from the library, use a template, add mental work, add S&C, or create a custom block.</p>
 
           <div class="empty-actions">
@@ -84,13 +103,13 @@
           </div>
         </div>
 
-       <div class="bottom-actions">
-  <button class="btn dark" data-jump="drills">Add Drill</button>
-  <button class="btn light" data-jump="mental">Add Mental</button>
-  <button class="btn light" data-jump="sc">Add S&C</button>
-  <button class="btn gold" id="savePracticeBtn">Save Practice</button>
-  <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
-</div>
+        <div class="bottom-actions">
+          <button class="btn dark" data-jump="drills">Add Drill</button>
+          <button class="btn light" data-jump="mental">Add Mental</button>
+          <button class="btn light" data-jump="sc">Add S&C</button>
+          <button class="btn gold" id="savePracticeBtn">Save Practice</button>
+          <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
+        </div>
       </section>
 
       <!-- DRILLS -->
@@ -100,6 +119,7 @@
             <h2>Drill Library</h2>
             <p>Browse by category, favorite drills, or search by skill.</p>
           </div>
+
           <span id="drillCountBadge" class="count-badge">0 drills</span>
         </div>
 
@@ -204,10 +224,12 @@
 
         <div class="backup-card">
           <h3>Data & Backup</h3>
+
           <button id="backupBtn" class="btn outline full">Check my saved data</button>
 
           <label class="backup-label">Restore from a backup</label>
           <textarea id="restoreText" placeholder="Paste backup text here..."></textarea>
+
           <button id="restoreBtn" class="btn dark full">Restore backup</button>
         </div>
       </section>
