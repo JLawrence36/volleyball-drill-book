@@ -1029,3 +1029,133 @@ label {
 .icon-btn.favorite-btn.active::after {
   content: "";
 }
+.category-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.category-card {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 24px;
+  padding: 18px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 14px;
+  align-items: start;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  width: 100%;
+}
+
+.category-card-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--navy-dark);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.category-card h3 {
+  margin: 0 0 6px;
+  font-size: 23px;
+  color: var(--navy-dark);
+}
+
+.category-card p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.category-card span {
+  display: inline-flex;
+  background: #edf3f7;
+  color: var(--navy-dark);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.category-card.favorite-card .category-card-icon {
+  background: var(--gold);
+  color: #111;
+}
+
+.category-card.favorite-card {
+  border-color: #f4d58d;
+  background: #fffaf0;
+}
+
+.category-card.locked {
+  opacity: 0.55;
+}
+
+.category-card.locked .category-card-icon {
+  background: #94a3b8;
+}
+
+.back-card {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--navy-dark);
+  border-radius: 18px;
+  padding: 15px 18px;
+  text-align: left;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+  margin-bottom: 6px;
+}
+
+.block-time-edit {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #f4f8fb;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 8px 10px;
+}
+
+.block-time-edit span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.block-time-edit input {
+  width: 78px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+@media (max-width: 720px) {
+  .category-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .category-card {
+    grid-template-columns: 54px 1fr;
+    padding: 16px;
+  }
+
+  .category-card-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 25px;
+  }
+}
