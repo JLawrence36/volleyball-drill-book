@@ -1,4 +1,5 @@
-const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V4";
+const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V5";
+const LEGACY_STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V4";
 
 const DRILLS = Array.isArray(window.DRILL_DATABASE) ? window.DRILL_DATABASE : [];
 
@@ -243,19 +244,34 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function defaultPractice(teamName = "Default Team") {
+  return {
+    id: makeId("practice"),
+    title: "",
+    date: today(),
+    team: teamName,
+    focus: "",
+    blocks: []
+  };
+}
+
+function defaultTeam(name = "Default Team") {
+  return {
+    id: makeId("team"),
+    name,
+    currentPractice: defaultPractice(name),
+    roster: [],
+    savedPractices: []
+  };
+}
+
 function defaultState() {
+  const team = defaultTeam("Default Team");
+
   return {
     activeTab: "plan",
-    currentPractice: {
-      id: makeId("practice"),
-      title: "",
-      date: today(),
-      team: "",
-      focus: "",
-      blocks: []
-    },
-    roster: [],
-    savedPractices: [],
+    activeTeamId: team.id,
+    teams: [team],
     favoriteDrills: []
   };
 }
@@ -270,36 +286,144 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function normalizePractice(practice, teamName) {
+  const fresh = defaultPractice(teamName);
+  const safePractice = practice && typeof practice === "object" ? practice : {};
+
+  return {
+    ...fresh,
+    ...safePractice,
+    id: safePractice.id || fresh.id,
+    date: safePractice.date || today(),
+    team: safePractice.team || teamName,
+    blocks: Array.isArray(safePractice.blocks) ? safePractice.blocks : []
+  };
+}
+
+function normalizeTeam(team, fallbackName = "Default Team") {
+  const safeTeam = team && typeof team === "object" ? team : {};
+  const name = String(safeTeam.name || fallbackName || "Default Team").trim() || "Default Team";
+
+  return {
+    id: safeTeam.id || makeId("team"),
+    name,
+    currentPractice: normalizePractice(safeTeam.currentPractice, name),
+    roster: Array.isArray(safeTeam.roster) ? safeTeam.roster : [],
+    savedPractices: Array.isArray(safeTeam.savedPractices) ? safeTeam.savedPractices : []
+  };
+}
+
+function migrateLegacyState(legacyState) {
+  const legacy = legacyState && typeof legacyState === "object" ? legacyState : {};
+  const legacyPractice = legacy.currentPractice || {};
+  const teamName = String(legacyPractice.team || "Default Team").trim() || "Default Team";
+
+  const team = normalizeTeam({
+    name: teamName,
+    currentPractice: legacyPractice,
+    roster: legacy.roster || [],
+    savedPractices: legacy.savedPractices || []
+  }, teamName);
+
+  return {
+    activeTab: legacy.activeTab || "plan",
+    activeTeamId: team.id,
+    teams: [team],
+    favoriteDrills: Array.isArray(legacy.favoriteDrills) ? legacy.favoriteDrills : []
+  };
+}
+
+function normalizeState(input) {
+  if (input && Array.isArray(input.teams)) {
+    const teams = input.teams.map((team, index) => normalizeTeam(team, index === 0 ? "Default Team" : `Team ${index + 1}`));
+
+    if (!teams.length) {
+      return defaultState();
+    }
+
+    const activeTeamId = teams.some(team => team.id === input.activeTeamId)
+      ? input.activeTeamId
+      : teams[0].id;
+
+    return {
+      activeTab: input.activeTab || "plan",
+      activeTeamId,
+      teams,
+      favoriteDrills: Array.isArray(input.favoriteDrills) ? input.favoriteDrills : []
+    };
+  }
+
+  if (input && (input.currentPractice || input.roster || input.savedPractices)) {
+    return migrateLegacyState(input);
+  }
+
+  return defaultState();
+}
+
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return;
 
-  try {
-    const parsed = JSON.parse(saved);
-    const fresh = defaultState();
-
-    state = {
-      ...fresh,
-      ...parsed,
-      currentPractice: {
-        ...fresh.currentPractice,
-        ...(parsed.currentPractice || {})
-      }
-    };
-  } catch {
-    state = defaultState();
+  if (saved) {
+    try {
+      state = normalizeState(JSON.parse(saved));
+      return;
+    } catch {
+      state = defaultState();
+      return;
+    }
   }
 
-  if (!state.currentPractice) state.currentPractice = defaultState().currentPractice;
-  if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
-  if (!Array.isArray(state.roster)) state.roster = [];
-  if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
-  if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
-  if (!state.currentPractice.date) state.currentPractice.date = today();
+  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+
+  if (legacy) {
+    try {
+      state = normalizeState(JSON.parse(legacy));
+      saveState();
+      return;
+    } catch {
+      state = defaultState();
+      return;
+    }
+  }
+
+  state = defaultState();
+}
+
+function activeTeam() {
+  if (!Array.isArray(state.teams) || !state.teams.length) {
+    const fresh = defaultState();
+    state.teams = fresh.teams;
+    state.activeTeamId = fresh.activeTeamId;
+  }
+
+  let team = state.teams.find(item => item.id === state.activeTeamId);
+
+  if (!team) {
+    team = state.teams[0];
+    state.activeTeamId = team.id;
+  }
+
+  team.currentPractice = normalizePractice(team.currentPractice, team.name);
+  if (!Array.isArray(team.roster)) team.roster = [];
+  if (!Array.isArray(team.savedPractices)) team.savedPractices = [];
+
+  return team;
+}
+
+function currentPractice() {
+  return activeTeam().currentPractice;
+}
+
+function currentRoster() {
+  return activeTeam().roster;
+}
+
+function currentSavedPractices() {
+  return activeTeam().savedPractices;
 }
 
 function formatDate(value) {
@@ -313,9 +437,96 @@ function formatDate(value) {
 }
 
 function totalMinutes() {
-  return state.currentPractice.blocks.reduce((sum, block) => {
+  return currentPractice().blocks.reduce((sum, block) => {
     return sum + (Number(block.minutes) || 0);
   }, 0);
+}
+
+function renderTeamManager() {
+  const team = activeTeam();
+  const label = $("activeTeamLabel");
+  const select = $("teamSelect");
+
+  if (label) label.textContent = team.name;
+
+  if (select) {
+    select.innerHTML = state.teams.map(item => {
+      return `<option value="${escapeHtml(item.id)}" ${item.id === team.id ? "selected" : ""}>${escapeHtml(item.name)}</option>`;
+    }).join("");
+  }
+}
+
+function switchActiveTeam(id) {
+  updatePracticeDetails();
+
+  if (!state.teams.some(team => team.id === id)) return;
+
+  state.activeTeamId = id;
+
+  const team = activeTeam();
+  if (!team.currentPractice.team) team.currentPractice.team = team.name;
+
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
+
+function addTeam() {
+  const name = prompt("Team name:");
+  if (!name || !name.trim()) return;
+
+  const team = defaultTeam(name.trim());
+  state.teams.push(team);
+  state.activeTeamId = team.id;
+
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
+
+function renameTeam() {
+  const team = activeTeam();
+  const oldName = team.name;
+  const name = prompt("Rename team:", oldName);
+
+  if (!name || !name.trim()) return;
+
+  const newName = name.trim();
+  team.name = newName;
+
+  if (!team.currentPractice.team || team.currentPractice.team === oldName) {
+    team.currentPractice.team = newName;
+  }
+
+  team.savedPractices = team.savedPractices.map(practice => {
+    if (!practice.team || practice.team === oldName) {
+      return { ...practice, team: newName };
+    }
+
+    return practice;
+  });
+
+  saveState();
+  renderAll();
+}
+
+function deleteTeam() {
+  if (state.teams.length <= 1) {
+    alert("You need at least one team.");
+    return;
+  }
+
+  const team = activeTeam();
+  const confirmed = confirm(`Delete ${team.name}? This removes that team's roster and saved practices from this device.`);
+
+  if (!confirmed) return;
+
+  state.teams = state.teams.filter(item => item.id !== team.id);
+  state.activeTeamId = state.teams[0].id;
+
+  saveState();
+  renderAll();
+  switchTab("plan");
 }
 
 function switchTab(tabName) {
@@ -413,19 +624,21 @@ function buildCustomBlock(title, minutes, notes) {
 }
 
 function addBlock(block) {
-  state.currentPractice.blocks.push(block);
+  currentPractice().blocks.push(block);
   saveState();
   switchTab("plan");
 }
 
 function removeBlock(id) {
-  state.currentPractice.blocks = state.currentPractice.blocks.filter(block => block.id !== id);
+  const practice = currentPractice();
+  practice.blocks = practice.blocks.filter(block => block.id !== id);
+
   saveState();
   renderPlan();
 }
 
 function moveBlock(id, amount) {
-  const blocks = state.currentPractice.blocks;
+  const blocks = currentPractice().blocks;
   const index = blocks.findIndex(block => block.id === id);
 
   if (index < 0) return;
@@ -441,46 +654,54 @@ function moveBlock(id, amount) {
 }
 
 function duplicateBlock(id) {
-  const block = state.currentPractice.blocks.find(item => item.id === id);
+  const practice = currentPractice();
+  const block = practice.blocks.find(item => item.id === id);
   if (!block) return;
 
   const copy = JSON.parse(JSON.stringify(block));
   copy.id = makeId("block");
   copy.title = `${copy.title} Copy`;
 
-  state.currentPractice.blocks.push(copy);
+  practice.blocks.push(copy);
 
   saveState();
   renderPlan();
 }
 
 function updatePracticeDetails() {
-  state.currentPractice.title = $("practiceTitle")?.value || "";
-  state.currentPractice.date = $("practiceDate")?.value || today();
-  state.currentPractice.team = $("practiceTeam")?.value || "";
-  state.currentPractice.focus = $("practiceFocus")?.value || "";
+  const practice = currentPractice();
+
+  practice.title = $("practiceTitle")?.value || "";
+  practice.date = $("practiceDate")?.value || today();
+  practice.team = $("practiceTeam")?.value || activeTeam().name;
+  practice.focus = $("practiceFocus")?.value || "";
 
   saveState();
 }
 
 function saveCurrentPractice() {
-  const practice = JSON.parse(JSON.stringify(state.currentPractice));
+  const team = activeTeam();
+  const practice = JSON.parse(JSON.stringify(team.currentPractice));
 
   if (!practice.title.trim()) {
     practice.title = "Untitled Practice";
   }
 
-  practice.updatedAt = new Date().toISOString();
-
-  const index = state.savedPractices.findIndex(item => item.id === practice.id);
-
-  if (index >= 0) {
-    state.savedPractices[index] = practice;
-  } else {
-    state.savedPractices.unshift(practice);
+  if (!practice.team) {
+    practice.team = team.name;
   }
 
-  state.currentPractice = practice;
+  practice.updatedAt = new Date().toISOString();
+
+  const index = team.savedPractices.findIndex(item => item.id === practice.id);
+
+  if (index >= 0) {
+    team.savedPractices[index] = practice;
+  } else {
+    team.savedPractices.unshift(practice);
+  }
+
+  team.currentPractice = practice;
 
   saveState();
   renderAll();
@@ -489,17 +710,19 @@ function saveCurrentPractice() {
 }
 
 function loadPractice(id) {
-  const practice = state.savedPractices.find(item => item.id === id);
+  const team = activeTeam();
+  const practice = team.savedPractices.find(item => item.id === id);
   if (!practice) return;
 
-  state.currentPractice = JSON.parse(JSON.stringify(practice));
+  team.currentPractice = normalizePractice(JSON.parse(JSON.stringify(practice)), team.name);
 
   saveState();
   switchTab("plan");
 }
 
 function duplicatePractice(id) {
-  const practice = state.savedPractices.find(item => item.id === id);
+  const team = activeTeam();
+  const practice = team.savedPractices.find(item => item.id === id);
   if (!practice) return;
 
   const copy = JSON.parse(JSON.stringify(practice));
@@ -507,7 +730,7 @@ function duplicatePractice(id) {
   copy.title = `${copy.title || "Practice"} Copy`;
   copy.updatedAt = new Date().toISOString();
 
-  state.savedPractices.unshift(copy);
+  team.savedPractices.unshift(copy);
 
   saveState();
   renderSaved();
@@ -516,7 +739,8 @@ function duplicatePractice(id) {
 function deletePractice(id) {
   if (!confirm("Delete this saved practice?")) return;
 
-  state.savedPractices = state.savedPractices.filter(item => item.id !== id);
+  const team = activeTeam();
+  team.savedPractices = team.savedPractices.filter(item => item.id !== id);
 
   saveState();
   renderSaved();
@@ -564,15 +788,19 @@ function loadTemplate(id) {
   const template = PRACTICE_TEMPLATES.find(item => item.id === id);
   if (!template) return;
 
-  if (state.currentPractice.blocks.length > 0) {
+  const team = activeTeam();
+  const practice = team.currentPractice;
+
+  if (practice.blocks.length > 0) {
     const replace = confirm("Load this template and replace the current practice blocks?");
     if (!replace) return;
   }
 
-  state.currentPractice = {
-    ...state.currentPractice,
+  team.currentPractice = {
+    ...practice,
     id: makeId("practice"),
     title: template.title,
+    team: team.name,
     focus: template.focus,
     blocks: template.blocks.map(buildTemplateBlock).filter(Boolean)
   };
@@ -585,13 +813,18 @@ function loadTemplate(id) {
 function renderPlan() {
   if (!$("planList")) return;
 
-  $("practiceTitle").value = state.currentPractice.title || "";
-  $("practiceDate").value = state.currentPractice.date || today();
-  $("practiceTeam").value = state.currentPractice.team || "";
-  $("practiceFocus").value = state.currentPractice.focus || "";
+  const team = activeTeam();
+  const practice = currentPractice();
+
+  renderTeamManager();
+
+  $("practiceTitle").value = practice.title || "";
+  $("practiceDate").value = practice.date || today();
+  $("practiceTeam").value = practice.team || team.name;
+  $("practiceFocus").value = practice.focus || "";
   $("totalMinutes").textContent = `${totalMinutes()}m`;
 
-  const blocks = state.currentPractice.blocks;
+  const blocks = practice.blocks;
   const list = $("planList");
   const empty = $("emptyPlan");
 
@@ -879,9 +1112,10 @@ function renderSC() {
 function renderRoster() {
   if (!$("rosterList")) return;
 
+  const roster = currentRoster();
   const empty = $("emptyRoster");
 
-  if (!state.roster.length) {
+  if (!roster.length) {
     $("rosterList").innerHTML = "";
     if (empty) empty.style.display = "block";
     return;
@@ -889,7 +1123,7 @@ function renderRoster() {
 
   if (empty) empty.style.display = "none";
 
-  $("rosterList").innerHTML = state.roster.map(player => `
+  $("rosterList").innerHTML = roster.map(player => `
     <div class="roster-card ${player.present ? "present" : ""}">
       <div data-toggle-player="${escapeHtml(player.id)}">
         <div class="roster-name">${escapeHtml(player.name)}</div>
@@ -904,9 +1138,10 @@ function renderRoster() {
 function renderSaved() {
   if (!$("savedList")) return;
 
+  const savedPractices = currentSavedPractices();
   const empty = $("emptySaved");
 
-  if (!state.savedPractices.length) {
+  if (!savedPractices.length) {
     $("savedList").innerHTML = "";
     if (empty) empty.style.display = "block";
     return;
@@ -914,7 +1149,7 @@ function renderSaved() {
 
   if (empty) empty.style.display = "none";
 
-  $("savedList").innerHTML = state.savedPractices.map(practice => {
+  $("savedList").innerHTML = savedPractices.map(practice => {
     const blocks = practice.blocks || [];
     const minutes = blocks.reduce((sum, block) => sum + (Number(block.minutes) || 0), 0);
 
@@ -1002,7 +1237,7 @@ function addPlayer() {
   const name = $("playerNameInput").value.trim();
   if (!name) return;
 
-  state.roster.push({
+  currentRoster().push({
     id: makeId("player"),
     name,
     present: false
@@ -1015,7 +1250,7 @@ function addPlayer() {
 }
 
 function togglePlayer(id) {
-  const player = state.roster.find(item => item.id === id);
+  const player = currentRoster().find(item => item.id === id);
   if (!player) return;
 
   player.present = !player.present;
@@ -1025,7 +1260,8 @@ function togglePlayer(id) {
 }
 
 function deletePlayer(id) {
-  state.roster = state.roster.filter(item => item.id !== id);
+  const team = activeTeam();
+  team.roster = team.roster.filter(item => item.id !== id);
 
   saveState();
   renderRoster();
@@ -1083,19 +1319,7 @@ function restoreData() {
   if (!raw) return;
 
   try {
-    const parsed = JSON.parse(raw);
-
-    state = {
-      ...defaultState(),
-      ...parsed
-    };
-
-    if (!state.currentPractice) state.currentPractice = defaultState().currentPractice;
-    if (!Array.isArray(state.currentPractice.blocks)) state.currentPractice.blocks = [];
-    if (!Array.isArray(state.roster)) state.roster = [];
-    if (!Array.isArray(state.savedPractices)) state.savedPractices = [];
-    if (!Array.isArray(state.favoriteDrills)) state.favoriteDrills = [];
-
+    state = normalizeState(JSON.parse(raw));
     saveState();
     renderAll();
 
@@ -1112,6 +1336,15 @@ function bindEvents() {
 
     const jump = event.target.closest("[data-jump]");
     if (jump) return switchTab(jump.dataset.jump);
+
+    const addTeamBtn = event.target.closest("#addTeamBtn");
+    if (addTeamBtn) return addTeam();
+
+    const renameTeamBtn = event.target.closest("#renameTeamBtn");
+    if (renameTeamBtn) return renameTeam();
+
+    const deleteTeamBtn = event.target.closest("#deleteTeamBtn");
+    if (deleteTeamBtn) return deleteTeam();
 
     const templateOpen = event.target.closest("#openTemplatesBtn, #openTemplatesBtnEmpty");
     if (templateOpen) return openTemplateModal();
@@ -1258,6 +1491,12 @@ function bindEvents() {
     if (restoreBtn) return restoreData();
   });
 
+  document.addEventListener("change", event => {
+    if (event.target.matches("#teamSelect")) {
+      switchActiveTeam(event.target.value);
+    }
+  });
+
   document.addEventListener("input", event => {
     if (event.target.matches("#practiceTitle, #practiceDate, #practiceTeam, #practiceFocus")) {
       updatePracticeDetails();
@@ -1269,7 +1508,7 @@ function bindEvents() {
     }
 
     if (event.target.matches("[data-block-minutes]")) {
-      const block = state.currentPractice.blocks.find(item => {
+      const block = currentPractice().blocks.find(item => {
         return item.id === event.target.dataset.blockMinutes;
       });
 
@@ -1281,7 +1520,7 @@ function bindEvents() {
     }
 
     if (event.target.matches("[data-block-notes]")) {
-      const block = state.currentPractice.blocks.find(item => {
+      const block = currentPractice().blocks.find(item => {
         return item.id === event.target.dataset.blockNotes;
       });
 
