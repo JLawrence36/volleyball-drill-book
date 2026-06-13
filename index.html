@@ -85,14 +85,14 @@
           </div>
         </div>
 
-        <div class="bottom-actions">
-          <button class="btn dark" data-jump="drills">Add Drill</button>
-          <button class="btn light" data-jump="mental">Add Mental</button>
-          <button class="btn light" data-jump="sc">Add S&C</button>
-          <button class="btn gold" id="savePracticeBtn">Save Practice</button>
-          <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
-        </div>
-      </section>
+    <div class="bottom-actions">
+  <button class="btn gold" id="openTemplatesBtn">⚡ Templates</button>
+  <button class="btn dark" data-jump="drills">Add Drill</button>
+  <button class="btn light" data-jump="mental">Add Mental</button>
+  <button class="btn light" data-jump="sc">Add S&C</button>
+  <button class="btn gold" id="savePracticeBtn">Save Practice</button>
+  <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
+</div>
 
       <!-- DRILLS -->
       <section id="drills" class="screen">
@@ -221,7 +221,17 @@
       <div id="detailsContent"></div>
     </div>
   </div>
+<!-- TEMPLATE MODAL -->
+<div id="templateModal" class="modal hidden">
+  <div class="modal-panel">
+    <button id="closeTemplateBtn" class="modal-close">×</button>
 
+    <h2 class="detail-title">Practice Templates</h2>
+    <p class="detail-meta">Tap a template to instantly build a practice plan. You can still edit minutes, move blocks, or delete anything after it loads.</p>
+
+    <div id="templateList" class="template-list"></div>
+  </div>
+</div>
   <!-- CUSTOM BLOCK MODAL -->
   <div id="customModal" class="modal hidden">
     <div class="modal-panel">
