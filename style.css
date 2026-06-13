@@ -1013,3 +1013,19 @@ label {
   border-color: #f4aa32;
   box-shadow: 0 8px 18px rgba(244, 170, 50, 0.28);
 }
+.icon-btn.favorite-btn {
+  background: #fff7df !important;
+  color: #9a6500 !important;
+  border: 2px solid #f4d58d !important;
+}
+
+.icon-btn.favorite-btn.active {
+  background: #f4aa32 !important;
+  color: #111 !important;
+  border: 2px solid #f4aa32 !important;
+  box-shadow: 0 8px 18px rgba(244, 170, 50, 0.35) !important;
+}
+
+.icon-btn.favorite-btn.active::after {
+  content: "";
+}
