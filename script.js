@@ -789,12 +789,88 @@ function renderCategories() {
     `;
   }).join("");
 }
+function categoryIcon(category) {
+  const icons = {
+    "Favorites": "★",
+    "Serving": "🎯",
+    "Serve Receive": "🛡️",
+    "Ball Control": "🏐",
+    "Setting": "🤲",
+    "Attacking": "💥",
+    "Defense": "🧱",
+    "Team Systems": "📋",
+    "Competition": "🔥",
+    "Warmup": "⚡"
+  };
+
+  return icons[category] || "🏐";
+}
+
+function categoryDescription(category) {
+  const descriptions = {
+    "Favorites": "Your go-to drills for fast practice building.",
+    "Serving": "Targets, pressure serves, short serves, and serving strategy.",
+    "Serve Receive": "Passing formations, seams, rotations, and first-ball control.",
+    "Ball Control": "Pepper, control games, movement, and touch consistency.",
+    "Setting": "Setter footwork, tempo, decision-making, and hitter connection.",
+    "Attacking": "Approach work, shot control, quicks, pins, and scoring tools.",
+    "Defense": "Reading hitters, digging, blocking, pursuit, and team defense.",
+    "Team Systems": "Serve-pass-set-hit, transition, sideout, wash drills, and 6v6 work.",
+    "Competition": "Pressure games, winners-stay formats, scoring, and live competition.",
+    "Warmup": "Simple prep blocks to get the team moving."
+  };
+
+  return descriptions[category] || "Volleyball drills for practice planning.";
+}
+
+function renderCategoryCards() {
+  const realCategories = CATEGORY_ORDER.filter(category => {
+    return DRILLS.some(drill => drill.category === category);
+  });
+
+  const favoriteCount = state.favoriteDrills.length;
+
+  const cards = [
+    {
+      category: "Favorites",
+      count: favoriteCount,
+      locked: favoriteCount === 0
+    },
+    ...realCategories.map(category => ({
+      category,
+      count: DRILLS.filter(drill => drill.category === category).length,
+      locked: false
+    }))
+  ];
+
+  return `
+    <div class="category-dashboard">
+      ${cards.map(card => `
+        <button 
+          type="button"
+          class="category-card ${card.category === "Favorites" ? "favorite-card" : ""} ${card.locked ? "locked" : ""}" 
+          data-category="${escapeHtml(card.category)}"
+          ${card.locked ? "disabled" : ""}
+        >
+          <div class="category-card-icon">${categoryIcon(card.category)}</div>
+
+          <div class="category-card-body">
+            <h3>${escapeHtml(card.category)}</h3>
+            <p>${escapeHtml(categoryDescription(card.category))}</p>
+            <span>${card.count} ${card.count === 1 ? "drill" : "drills"}</span>
+          </div>
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
 
 function renderDrills() {
   renderCategories();
 
   const list = $("drillLibrary");
   const drills = filteredDrills();
+  const searching = drillSearch.trim().length > 0;
 
   $("drillCountBadge").textContent = `${drills.length} drills`;
 
@@ -804,6 +880,11 @@ function renderDrills() {
         <p>No drills loaded. Check that drills.js is still connected above script.js.</p>
       </div>
     `;
+    return;
+  }
+
+  if (activeCategory === "All" && !searching) {
+    list.innerHTML = renderCategoryCards();
     return;
   }
 
@@ -817,12 +898,21 @@ function renderDrills() {
   }
 
   let html = "";
+
+  if (activeCategory !== "All") {
+    html += `
+      <button type="button" class="back-card" data-category="All">
+        ← Back to drill categories
+      </button>
+    `;
+  }
+
   let lastCategory = "";
 
   drills.forEach(drill => {
     const favorite = isFavoriteDrill(drill.id);
 
-    if (drill.category !== lastCategory) {
+    if ((searching || activeCategory === "All") && drill.category !== lastCategory) {
       lastCategory = drill.category;
 
       html += `
