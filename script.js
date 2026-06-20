@@ -1,7 +1,9 @@
-const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V5";
-const LEGACY_STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V4";
+const STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V6";
+const LEGACY_STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V5";
+const OLDER_LEGACY_STORAGE_KEY = "VOLLEYBALL_PRACTICE_PLANNER_V4";
 
-const DRILLS = Array.isArray(window.DRILL_DATABASE) ? window.DRILL_DATABASE : [];
+const BASE_DRILLS = Array.isArray(window.DRILL_DATABASE) ? [...window.DRILL_DATABASE] : [];
+let DRILLS = [...BASE_DRILLS];
 
 const CATEGORY_ORDER = [
   "Warmup",
@@ -245,7 +247,7 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function defaultPractice(teamName = "Default Team") {
+function defaultPractice(teamName = "RISING SUN TIGERS") {
   return {
     id: makeId("practice"),
     title: "",
@@ -256,7 +258,7 @@ function defaultPractice(teamName = "Default Team") {
   };
 }
 
-function defaultTeam(name = "Default Team") {
+function defaultTeam(name = "RISING SUN TIGERS") {
   return {
     id: makeId("team"),
     name,
@@ -267,13 +269,14 @@ function defaultTeam(name = "Default Team") {
 }
 
 function defaultState() {
-  const team = defaultTeam("Default Team");
+  const team = defaultTeam("RISING SUN TIGERS");
 
   return {
     activeTab: "plan",
     activeTeamId: team.id,
     teams: [team],
-    favoriteDrills: []
+    favoriteDrills: [],
+    customDrills: []
   };
 }
 
@@ -301,9 +304,9 @@ function normalizePractice(practice, teamName) {
   };
 }
 
-function normalizeTeam(team, fallbackName = "Default Team") {
+function normalizeTeam(team, fallbackName = "RISING SUN TIGERS") {
   const safeTeam = team && typeof team === "object" ? team : {};
-  const name = String(safeTeam.name || fallbackName || "Default Team").trim() || "Default Team";
+  const name = String(safeTeam.name || fallbackName || "RISING SUN TIGERS").trim() || "RISING SUN TIGERS";
 
   return {
     id: safeTeam.id || makeId("team"),
@@ -317,7 +320,7 @@ function normalizeTeam(team, fallbackName = "Default Team") {
 function migrateLegacyState(legacyState) {
   const legacy = legacyState && typeof legacyState === "object" ? legacyState : {};
   const legacyPractice = legacy.currentPractice || {};
-  const teamName = String(legacyPractice.team || "Default Team").trim() || "Default Team";
+  const teamName = String(legacyPractice.team || "RISING SUN TIGERS").trim() || "RISING SUN TIGERS";
 
   const team = normalizeTeam({
     name: teamName,
@@ -330,13 +333,14 @@ function migrateLegacyState(legacyState) {
     activeTab: legacy.activeTab || "plan",
     activeTeamId: team.id,
     teams: [team],
-    favoriteDrills: Array.isArray(legacy.favoriteDrills) ? legacy.favoriteDrills : []
+    favoriteDrills: Array.isArray(legacy.favoriteDrills) ? legacy.favoriteDrills : [],
+    customDrills: Array.isArray(legacy.customDrills) ? legacy.customDrills : []
   };
 }
 
 function normalizeState(input) {
   if (input && Array.isArray(input.teams)) {
-    const teams = input.teams.map((team, index) => normalizeTeam(team, index === 0 ? "Default Team" : `Team ${index + 1}`));
+    const teams = input.teams.map((team, index) => normalizeTeam(team, index === 0 ? "RISING SUN TIGERS" : `Team ${index + 1}`));
 
     if (!teams.length) {
       return defaultState();
@@ -350,7 +354,8 @@ function normalizeState(input) {
       activeTab: input.activeTab || "plan",
       activeTeamId,
       teams,
-      favoriteDrills: Array.isArray(input.favoriteDrills) ? input.favoriteDrills : []
+      favoriteDrills: Array.isArray(input.favoriteDrills) ? input.favoriteDrills : [],
+      customDrills: Array.isArray(input.customDrills) ? input.customDrills : []
     };
   }
 
@@ -366,32 +371,28 @@ function saveState() {
 }
 
 function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const keys = [STORAGE_KEY, LEGACY_STORAGE_KEY, OLDER_LEGACY_STORAGE_KEY];
 
-  if (saved) {
-    try {
-      state = normalizeState(JSON.parse(saved));
-      return;
-    } catch {
-      state = defaultState();
-      return;
-    }
-  }
+  for (const key of keys) {
+    const saved = localStorage.getItem(key);
 
-  const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-
-  if (legacy) {
-    try {
-      state = normalizeState(JSON.parse(legacy));
-      saveState();
-      return;
-    } catch {
-      state = defaultState();
-      return;
+    if (saved) {
+      try {
+        state = normalizeState(JSON.parse(saved));
+        saveState();
+        return;
+      } catch {
+        // Try next key.
+      }
     }
   }
 
   state = defaultState();
+}
+
+function syncCustomDrills() {
+  const custom = Array.isArray(state.customDrills) ? state.customDrills : [];
+  DRILLS = [...BASE_DRILLS, ...custom];
 }
 
 function activeTeam() {
@@ -530,6 +531,21 @@ function deleteTeam() {
   switchTab("plan");
 }
 
+function newPractice() {
+  const team = activeTeam();
+
+  if (team.currentPractice.blocks.length > 0) {
+    const confirmed = confirm("Start a new blank practice? Save first if you want to keep the current one.");
+    if (!confirmed) return;
+  }
+
+  team.currentPractice = defaultPractice(team.name);
+
+  saveState();
+  renderAll();
+  switchTab("plan");
+}
+
 function switchTab(tabName) {
   state.activeTab = tabName;
 
@@ -585,6 +601,7 @@ function buildBlockFromDrill(drill) {
     minutes: Number(drill.time) || 10,
     summary: drill.purpose || "",
     details: Array.isArray(drill.run) ? drill.run : [],
+    setup: drill.setup || "",
     coaching: drill.coaching || "",
     evaluate: drill.evaluate || "",
     notes: "",
@@ -601,6 +618,7 @@ function buildLibraryBlock(item, type) {
     minutes: Number(item.minutes) || 5,
     summary: item.summary || "",
     details: Array.isArray(item.details) ? item.details : [],
+    setup: "",
     coaching: item.coaching || "",
     evaluate: "",
     notes: "",
@@ -617,6 +635,7 @@ function buildCustomBlock(title, minutes, notes) {
     minutes: Number(minutes) || 5,
     summary: notes || "",
     details: [],
+    setup: "",
     coaching: "",
     evaluate: "",
     notes: notes || "",
@@ -681,6 +700,8 @@ function updatePracticeDetails() {
 }
 
 function saveCurrentPractice() {
+  updatePracticeDetails();
+
   const team = activeTeam();
   const practice = JSON.parse(JSON.stringify(team.currentPractice));
 
@@ -904,8 +925,8 @@ function categoryIcon(category) {
     Setting: "🤲",
     Attacking: "💥",
     Defense: "🧱",
-"Out of System": "🌀",
-"Team Systems": "📋",
+    "Out of System": "🌀",
+    "Team Systems": "📋",
     Competition: "🔥",
     Warmup: "⚡"
   }[category] || "🏐";
@@ -920,8 +941,8 @@ function categoryDescription(category) {
     Setting: "Setter footwork, tempo, decision-making, and hitter connection.",
     Attacking: "Approach work, shot control, quicks, pins, and scoring tools.",
     Defense: "Reading hitters, digging, blocking, pursuit, and team defense.",
-"Out of System": "Scramble plays, emergency setting, high balls, and broken-play recovery.",
-"Team Systems": "Serve-pass-set-hit, transition, sideout, wash drills, and 6v6 work.",
+    "Out of System": "Scramble plays, emergency setting, high balls, and broken-play recovery.",
+    "Team Systems": "Serve-pass-set-hit, transition, sideout, wash drills, and 6v6 work.",
     Competition: "Pressure games, winners-stay formats, scoring, and live competition.",
     Warmup: "Simple prep blocks to get the team moving."
   }[category] || "Volleyball drills.";
@@ -937,7 +958,7 @@ function sortedDrills() {
 
     if (safeA !== safeB) return safeA - safeB;
 
-    return Number(a.number || 0) - Number(b.number || 0);
+    return String(a.number || "").localeCompare(String(b.number || ""), undefined, { numeric: true });
   });
 }
 
@@ -962,7 +983,8 @@ function filteredDrills() {
       drill.setup,
       Array.isArray(drill.run) ? drill.run.join(" ") : "",
       drill.coaching,
-      drill.evaluate
+      drill.evaluate,
+      drill.source
     ].join(" ").toLowerCase();
 
     return categoryMatch && (!query || searchable.includes(query));
@@ -1016,7 +1038,7 @@ function renderDrills() {
   $("drillCountBadge").textContent = `${drills.length} drills`;
 
   if (!DRILLS.length) {
-    list.innerHTML = `<div class="empty-card small"><p>No drills loaded. Check drills.js.</p></div>`;
+    list.innerHTML = `<div class="empty-card small"><p>No drills loaded. Check drills.js and drills-extra.js.</p></div>`;
     return;
   }
 
@@ -1052,6 +1074,7 @@ function renderDrills() {
 
           <div class="card-meta">
             ${escapeHtml(drill.level || "All levels")} · ${escapeHtml(drill.time || 10)} min · ${escapeHtml(drill.players || "Any")} · ${escapeHtml(drill.skills || "Volleyball")}
+            ${drill.custom ? " · Custom" : ""}
             · <button class="card-link" data-open-drill="${escapeHtml(drill.id)}">Details</button>
           </div>
         </div>
@@ -1060,6 +1083,7 @@ function renderDrills() {
           <button class="icon-btn favorite-btn ${favorite ? "active" : ""}" data-toggle-favorite="${escapeHtml(drill.id)}">${favorite ? "★" : "☆"}</button>
           <button class="icon-btn" data-add-drill="${escapeHtml(drill.id)}">＋</button>
           <button class="icon-btn" data-open-drill="${escapeHtml(drill.id)}">?</button>
+          ${drill.custom ? `<button class="icon-btn danger" data-delete-custom-drill="${escapeHtml(drill.id)}">🗑</button>` : ""}
         </div>
       </div>
     `;
@@ -1194,6 +1218,7 @@ function renderTemplates() {
 }
 
 function renderAll() {
+  syncCustomDrills();
   renderPlan();
   renderDrills();
   renderMental();
@@ -1236,6 +1261,90 @@ function saveCustomBlock() {
   closeCustomModal();
 }
 
+function openCustomDrillModal() {
+  $("customDrillName").value = "";
+  $("customDrillCategory").value = "Serving";
+  $("customDrillPlayers").value = "";
+  $("customDrillTime").value = "";
+  $("customDrillLevel").value = "Beginner";
+  $("customDrillSkills").value = "";
+  $("customDrillPurpose").value = "";
+  $("customDrillSetup").value = "";
+  $("customDrillRun").value = "";
+  $("customDrillCoaching").value = "";
+  $("customDrillEvaluate").value = "";
+
+  $("customDrillModal").classList.remove("hidden");
+}
+
+function closeCustomDrillModal() {
+  if ($("customDrillModal")) $("customDrillModal").classList.add("hidden");
+}
+
+function saveCustomDrill() {
+  const name = $("customDrillName").value.trim();
+
+  if (!name) {
+    alert("Add a drill name.");
+    return;
+  }
+
+  if (!Array.isArray(state.customDrills)) {
+    state.customDrills = [];
+  }
+
+  const number = `C${String(state.customDrills.length + 1).padStart(3, "0")}`;
+
+  const runSteps = $("customDrillRun").value
+    .split("\n")
+    .map(step => step.trim())
+    .filter(Boolean);
+
+  const newDrill = {
+    id: makeId("custom_drill"),
+    number,
+    category: $("customDrillCategory").value,
+    name,
+    source: "Custom Coach Drill",
+    players: $("customDrillPlayers").value.trim() || "Any",
+    time: Number($("customDrillTime").value) || 10,
+    level: $("customDrillLevel").value,
+    skills: $("customDrillSkills").value.trim() || "Volleyball",
+    purpose: $("customDrillPurpose").value.trim(),
+    setup: $("customDrillSetup").value.trim(),
+    run: runSteps,
+    coaching: $("customDrillCoaching").value.trim(),
+    evaluate: $("customDrillEvaluate").value.trim(),
+    custom: true
+  };
+
+  state.customDrills.push(newDrill);
+  syncCustomDrills();
+  saveState();
+
+  closeCustomDrillModal();
+
+  activeCategory = newDrill.category;
+  drillSearch = "";
+  if ($("drillSearch")) $("drillSearch").value = "";
+
+  renderAll();
+  switchTab("drills");
+
+  alert("Custom drill saved.");
+}
+
+function deleteCustomDrill(id) {
+  if (!confirm("Delete this custom drill?")) return;
+
+  state.customDrills = (state.customDrills || []).filter(drill => drill.id !== id);
+  state.favoriteDrills = state.favoriteDrills.filter(item => item !== id);
+
+  syncCustomDrills();
+  saveState();
+  renderAll();
+}
+
 function addPlayer() {
   const name = $("playerNameInput").value.trim();
   if (!name) return;
@@ -1274,7 +1383,9 @@ function openDetails(item, type) {
   if (!$("detailsModal") || !$("detailsContent")) return;
 
   const title = type === "drill" ? `${item.number}. ${item.name}` : item.title;
-  const meta = type === "drill" ? `${item.category} · ${item.time} min · ${item.players}` : `${item.category} · ${item.minutes} min`;
+  const meta = type === "drill"
+    ? `${item.category} · ${item.time} min · ${item.players}`
+    : `${item.category} · ${item.minutes} min`;
   const summary = type === "drill" ? item.purpose : item.summary;
   const details = type === "drill" ? item.run : item.details;
   const coaching = item.coaching || "";
@@ -1282,12 +1393,19 @@ function openDetails(item, type) {
 
   $("detailsContent").innerHTML = `
     <h2 class="detail-title">${escapeHtml(title)}</h2>
-    <div class="detail-meta">${escapeHtml(meta)}</div>
+    <div class="detail-meta">${escapeHtml(meta)}${item.source ? ` · ${escapeHtml(item.source)}` : ""}</div>
 
     <div class="detail-section">
       <h3>Purpose</h3>
       <p>${escapeHtml(summary || "")}</p>
     </div>
+
+    ${type === "drill" && item.setup ? `
+      <div class="detail-section">
+        <h3>Setup</h3>
+        <p>${escapeHtml(item.setup)}</p>
+      </div>
+    ` : ""}
 
     <div class="detail-section">
       <h3>How to Run It</h3>
@@ -1314,7 +1432,39 @@ function printPracticePlan() {
 }
 
 function backupData() {
-  prompt("Copy this backup:", JSON.stringify(state, null, 2));
+  const code = JSON.stringify(state, null, 2);
+  $("restoreText").value = code;
+  alert("Backup code created. Copy it or share it to move data to another device.");
+}
+
+async function copyBackupData() {
+  const text = $("restoreText").value.trim() || JSON.stringify(state, null, 2);
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Backup code copied.");
+  } catch {
+    $("restoreText").value = text;
+    alert("Copy failed. The backup code is in the box so you can copy it manually.");
+  }
+}
+
+async function shareBackupData() {
+  const text = $("restoreText").value.trim() || JSON.stringify(state, null, 2);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "Volleyball Practice Planner Backup",
+        text
+      });
+    } catch {
+      // User cancelled share.
+    }
+  } else {
+    $("restoreText").value = text;
+    alert("Sharing is not supported on this device. The backup code is in the box so you can copy it.");
+  }
 }
 
 function restoreData() {
@@ -1323,6 +1473,7 @@ function restoreData() {
 
   try {
     state = normalizeState(JSON.parse(raw));
+    syncCustomDrills();
     saveState();
     renderAll();
 
@@ -1349,6 +1500,9 @@ function bindEvents() {
     const deleteTeamBtn = event.target.closest("#deleteTeamBtn");
     if (deleteTeamBtn) return deleteTeam();
 
+    const newPracticeBtn = event.target.closest("#newPracticeBtn");
+    if (newPracticeBtn) return newPractice();
+
     const templateOpen = event.target.closest("#openTemplatesBtn, #openTemplatesBtnEmpty");
     if (templateOpen) return openTemplateModal();
 
@@ -1369,6 +1523,18 @@ function bindEvents() {
       mentalFilter = mentalButton.dataset.mentalFilter;
       return renderMental();
     }
+
+    const customDrillOpen = event.target.closest("#openCustomDrillBtn");
+    if (customDrillOpen) return openCustomDrillModal();
+
+    const customDrillClose = event.target.closest("#closeCustomDrillBtn");
+    if (customDrillClose) return closeCustomDrillModal();
+
+    const customDrillSave = event.target.closest("#saveCustomDrillBtn");
+    if (customDrillSave) return saveCustomDrill();
+
+    const deleteCustomDrillBtn = event.target.closest("[data-delete-custom-drill]");
+    if (deleteCustomDrillBtn) return deleteCustomDrill(deleteCustomDrillBtn.dataset.deleteCustomDrill);
 
     const fav = event.target.closest("[data-toggle-favorite]");
     if (fav) return toggleFavorite(fav.dataset.toggleFavorite);
@@ -1490,6 +1656,12 @@ function bindEvents() {
     const backupBtn = event.target.closest("#backupBtn");
     if (backupBtn) return backupData();
 
+    const copyBackupBtn = event.target.closest("#copyBackupBtn");
+    if (copyBackupBtn) return copyBackupData();
+
+    const shareBackupBtn = event.target.closest("#shareBackupBtn");
+    if (shareBackupBtn) return shareBackupData();
+
     const restoreBtn = event.target.closest("#restoreBtn");
     if (restoreBtn) return restoreData();
   });
@@ -1542,6 +1714,7 @@ function bindEvents() {
     if (event.key === "Escape") {
       closeTemplateModal();
       closeCustomModal();
+      closeCustomDrillModal();
       closeDetails();
     }
   });
@@ -1549,12 +1722,14 @@ function bindEvents() {
   document.addEventListener("click", event => {
     if (event.target.id === "templateModal") closeTemplateModal();
     if (event.target.id === "customModal") closeCustomModal();
+    if (event.target.id === "customDrillModal") closeCustomDrillModal();
     if (event.target.id === "detailsModal") closeDetails();
   });
 }
 
 function initApp() {
   loadState();
+  syncCustomDrills();
   bindEvents();
   renderAll();
   switchTab(state.activeTab || "plan");
