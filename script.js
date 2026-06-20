@@ -11,6 +11,7 @@ const CATEGORY_ORDER = [
   "Setting",
   "Attacking",
   "Defense",
+  "Out of System",
   "Team Systems",
   "Competition"
 ];
