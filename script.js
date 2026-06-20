@@ -904,7 +904,8 @@ function categoryIcon(category) {
     Setting: "🤲",
     Attacking: "💥",
     Defense: "🧱",
-    "Team Systems": "📋",
+"Out of System": "🌀",
+"Team Systems": "📋",
     Competition: "🔥",
     Warmup: "⚡"
   }[category] || "🏐";
@@ -919,7 +920,8 @@ function categoryDescription(category) {
     Setting: "Setter footwork, tempo, decision-making, and hitter connection.",
     Attacking: "Approach work, shot control, quicks, pins, and scoring tools.",
     Defense: "Reading hitters, digging, blocking, pursuit, and team defense.",
-    "Team Systems": "Serve-pass-set-hit, transition, sideout, wash drills, and 6v6 work.",
+"Out of System": "Scramble plays, emergency setting, high balls, and broken-play recovery.",
+"Team Systems": "Serve-pass-set-hit, transition, sideout, wash drills, and 6v6 work.",
     Competition: "Pressure games, winners-stay formats, scoring, and live competition.",
     Warmup: "Simple prep blocks to get the team moving."
   }[category] || "Volleyball drills.";
