@@ -75,7 +75,7 @@
           <div class="team-manager-head">
             <div>
               <span>Active Team</span>
-              <strong id="activeTeamLabel">Default Team</strong>
+              <strong id="activeTeamLabel">RISING SUN TIGERS</strong>
             </div>
           </div>
 
@@ -109,6 +109,7 @@
           <button class="btn light" data-jump="sc">Add S&C</button>
           <button class="btn gold" id="savePracticeBtn">Save Practice</button>
           <button class="btn outline" id="printPracticeBtn">Print / PDF</button>
+          <button class="btn outline" id="newPracticeBtn">New Practice</button>
         </div>
       </section>
 
@@ -117,21 +118,19 @@
         <div class="section-head">
           <div>
             <h2>Drill Library</h2>
-            <p>Browse by category, favorite drills, or search by skill.</p>
+            <p>Browse by category, favorite drills, search by skill, or create your own.</p>
           </div>
 
           <span id="drillCountBadge" class="count-badge">0 drills</span>
         </div>
 
-       <div class="search-card">
-  <input id="drillSearch" type="search" placeholder="Search serve, defense, setter, 15 min..." />
-</div>
+        <div class="search-card">
+          <input id="drillSearch" type="search" placeholder="Search serve, defense, setter, 15 min..." />
+        </div>
 
-<div class="drill-tools">
-  <button id="openCustomDrillBtn" class="btn gold full">＋ Create Custom Drill</button>
-</div>
-
-<div id="categoryChips" class="chip-row"></div>
+        <div class="drill-tools">
+          <button id="openCustomDrillBtn" class="btn gold full">＋ Create Custom Drill</button>
+        </div>
 
         <div id="categoryChips" class="chip-row"></div>
         <div id="drillLibrary" class="library-list"></div>
@@ -232,7 +231,7 @@
           <h3>Backup & Move Devices</h3>
 
           <p class="backup-help">
-            Use this to move all teams, rosters, saved practices, and current plans between phone and tablet.
+            Use this to move all teams, rosters, custom drills, saved practices, and current plans between phone and tablet.
           </p>
 
           <div class="backup-actions">
@@ -291,8 +290,75 @@
     </div>
   </div>
 
-<script src="drills.js"></script>
-<script src="drills-extra.js"></script>
-<script src="script.js"></script>
+  <!-- CUSTOM DRILL MODAL -->
+  <div id="customDrillModal" class="modal hidden">
+    <div class="modal-panel">
+      <button id="closeCustomDrillBtn" class="modal-close">×</button>
+
+      <h2>Create Custom Drill</h2>
+      <p class="detail-meta">This saves to the drill library and can be added to any practice.</p>
+
+      <label>Drill Name</label>
+      <input id="customDrillName" type="text" placeholder="Example: Serve Receive Chaos" />
+
+      <label>Category</label>
+      <select id="customDrillCategory">
+        <option>Serving</option>
+        <option>Serve Receive</option>
+        <option>Ball Control</option>
+        <option>Setting</option>
+        <option>Attacking</option>
+        <option>Defense</option>
+        <option>Out of System</option>
+        <option>Team Systems</option>
+        <option>Competition</option>
+        <option>Warmup</option>
+      </select>
+
+      <div class="custom-drill-grid">
+        <div>
+          <label>Players</label>
+          <input id="customDrillPlayers" type="text" placeholder="Any / 6-12 / Pairs" />
+        </div>
+
+        <div>
+          <label>Minutes</label>
+          <input id="customDrillTime" type="number" placeholder="10" />
+        </div>
+      </div>
+
+      <label>Level</label>
+      <select id="customDrillLevel">
+        <option>Beginner</option>
+        <option>Intermediate</option>
+        <option>Advanced</option>
+        <option>All levels</option>
+      </select>
+
+      <label>Skills</label>
+      <input id="customDrillSkills" type="text" placeholder="Passing, communication, pressure..." />
+
+      <label>Purpose</label>
+      <textarea id="customDrillPurpose" placeholder="What does this drill train?"></textarea>
+
+      <label>Setup</label>
+      <textarea id="customDrillSetup" placeholder="How should the court, players, balls, and coaches be set up?"></textarea>
+
+      <label>How to Run It</label>
+      <textarea id="customDrillRun" placeholder="Put each step on its own line."></textarea>
+
+      <label>Coaching Points</label>
+      <textarea id="customDrillCoaching" placeholder="What cues should the coach use?"></textarea>
+
+      <label>What to Evaluate</label>
+      <textarea id="customDrillEvaluate" placeholder="What should the coach watch for?"></textarea>
+
+      <button id="saveCustomDrillBtn" class="btn dark full">Save Custom Drill</button>
+    </div>
+  </div>
+
+  <script src="drills.js"></script>
+  <script src="drills-extra.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
